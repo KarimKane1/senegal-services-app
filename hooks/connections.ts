@@ -13,7 +13,7 @@ export function useConnections(userId?: string) {
       return res.json();
     },
     staleTime: 0, // Always consider data stale to ensure fresh fetches
-    cacheTime: 0, // Don't cache the data
+    gcTime: 0, // Don't cache the data
   });
 }
 
@@ -29,7 +29,7 @@ export function useConnectionRequests(userId?: string) {
       return res.json();
     },
     staleTime: 0, // Always consider data stale to ensure fresh fetches
-    cacheTime: 0, // Don't cache the data
+    gcTime: 0, // Don't cache the data
   });
 }
 
@@ -45,7 +45,7 @@ export function useSentConnectionRequests(userId?: string) {
       return res.json();
     },
     staleTime: 0, // Always consider data stale to ensure fresh fetches
-    cacheTime: 0, // Don't cache the data
+    gcTime: 0, // Don't cache the data
   });
 }
 
