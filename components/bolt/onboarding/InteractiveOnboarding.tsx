@@ -64,7 +64,7 @@ const providerSteps: OnboardingStep[] = [
     description: 'Grow your business through trusted recommendations. Let\'s get you started quickly.',
     targetSelector: '',
     position: 'top',
-    arrow: 'none'
+    arrow: 'up'
   },
   {
     id: 'share-profile',
