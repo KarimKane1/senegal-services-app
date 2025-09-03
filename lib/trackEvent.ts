@@ -1,5 +1,5 @@
 // Use stub client to prevent build-time Supabase imports
-const createClient = () => ({
+const createClient = (url?: string, key?: string) => ({
   from: () => ({
     insert: () => Promise.resolve({ error: null })
   }),

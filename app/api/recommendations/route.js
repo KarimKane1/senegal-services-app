@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../lib/supabase/server';
 // Use stub client to prevent build-time Supabase imports
-const createClient = () => ({
+const createClient = (url, key) => ({
   from: () => ({
     select: () => ({
       eq: () => ({
