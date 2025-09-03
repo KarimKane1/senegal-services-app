@@ -27,9 +27,7 @@ function LanguageGate({ children }) {
   // Client wrapper to set html lang according to user metadata
   if (typeof window === 'undefined') return children;
   // Lazy hook usage in client
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { user } = useAuth();
-  const lang = (user?.['language'] || user?.['locale'] || user?.['userType'] === 'seeker' && user?.['language']) || (user?.['isGuest'] ? 'en' : (user?.['language'] || 'en'));
   React.useEffect(() => {
     const html = document.documentElement;
     if (html) html.setAttribute('lang', (user?.language || 'en'));

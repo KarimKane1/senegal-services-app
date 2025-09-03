@@ -8,7 +8,7 @@ export async function GET() {
       environment: process.env.NODE_ENV || 'development',
       version: process.env.npm_package_version || '1.0.0'
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { 
         ok: false, 
