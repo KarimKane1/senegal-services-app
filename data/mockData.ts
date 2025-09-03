@@ -60,6 +60,7 @@ export const mockConnections: Connection[] = [
         location: 'Dakar',
         avatar: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
         phone: '+221 77 111 2222',
+        isNetworkRecommendation: true,
         qualities: ['Job quality', 'Timeliness', 'Polite & Respectful'],
         watchFor: ['Expensive']
       },
@@ -70,6 +71,7 @@ export const mockConnections: Connection[] = [
         location: 'Dakar',
         avatar: 'https://images.pexels.com/photos/1181216/pexels-photo-1181216.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
         phone: '+221 77 555 6666',
+        isNetworkRecommendation: true,
         qualities: ['Job quality', 'Timeliness', 'Reliable & Trustworthy'],
         watchFor: ['Clean & Organized']
       }
@@ -89,6 +91,7 @@ export const mockConnections: Connection[] = [
         location: 'Thiès',
         avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
         phone: '+221 78 222 3333',
+        isNetworkRecommendation: true,
         qualities: ['Job quality', 'Clean & Organized', 'Polite & Respectful'],
         watchFor: []
       },
@@ -99,6 +102,7 @@ export const mockConnections: Connection[] = [
         location: 'Rufisque',
         avatar: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
         phone: '+221 77 333 4444',
+        isNetworkRecommendation: true,
         qualities: ['Job quality', 'Professional'],
         watchFor: ['Expensive']
       }
@@ -118,6 +122,7 @@ export const mockConnections: Connection[] = [
         location: 'Dakar',
         avatar: 'https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
         phone: '+221 76 444 5555',
+        isNetworkRecommendation: true,
         qualities: ['Professional', 'Clean & Organized'],
         watchFor: ['Limited availability']
       }
