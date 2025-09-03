@@ -223,7 +223,6 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
     
     switch (currentStepData.arrow) {
       case 'down': return <ArrowDown className="w-6 h-6 text-blue-500" />;
-      case 'up': return <ArrowUp className="w-6 h-6 text-blue-500" />;
       case 'left': return <ArrowLeft className="w-6 h-6 text-blue-500" />;
       case 'right': return <ArrowRight className="w-6 h-6 text-blue-500" />;
       default: return <ArrowDown className="w-6 h-6 text-blue-500" />;
