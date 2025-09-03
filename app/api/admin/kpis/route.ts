@@ -61,7 +61,7 @@ export async function GET() {
       .gte('created_at', sevenDaysAgo.toISOString());
 
     const activePhoneNumbers7d = new Set(
-      recentRecommendations7d?.map(r => r.users?.phone_e164).filter(Boolean) || []
+      recentRecommendations7d?.map((r: any) => r.users?.phone_e164).filter(Boolean) || []
     );
     const activeUsersWAU = activePhoneNumbers7d.size;
 
@@ -78,7 +78,7 @@ export async function GET() {
       .gte('created_at', thirtyDaysAgo.toISOString());
 
     const activePhoneNumbers30d = new Set(
-      recentRecommendations30d?.map(r => r.users?.phone_e164).filter(Boolean) || []
+      recentRecommendations30d?.map((r: any) => r.users?.phone_e164).filter(Boolean) || []
     );
     const activeUsersMAU = activePhoneNumbers30d.size;
 
