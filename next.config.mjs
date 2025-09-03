@@ -11,8 +11,6 @@ const nextConfig = {
       bodySizeLimit: '2mb'
     },
     serverComponentsExternalPackages: ['@supabase/supabase-js'],
-    // Disable static optimization
-    staticGenerationRetryCount: 0,
   },
   // Force dynamic rendering for all pages
   output: 'standalone',
@@ -24,21 +22,10 @@ const nextConfig = {
   distDir: '.next',
   // Force all pages to be server-side rendered
   swcMinify: true,
-  // Completely disable static generation
-  skipTrailingSlashRedirect: true,
-  skipMiddlewareUrlNormalize: true,
   // Disable static optimization
   images: {
     unoptimized: true,
   },
-  // Force all pages to be dynamic
-  generateStaticParams: false,
-  // Disable static optimization at the root level
-  staticPageGenerationTimeout: 0,
-  // Force dynamic rendering
-  dynamicParams: true,
-  // Disable static generation completely
-  outputFileTracing: false,
 };
 
 export default nextConfig;
