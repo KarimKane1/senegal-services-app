@@ -26,6 +26,7 @@ interface AuthContextType {
     city: string;
     userType: 'seeker' | 'provider';
     countryCode: string;
+    language?: string;
   }) => Promise<void>;
   logout: () => void;
   connections: Connection[];
