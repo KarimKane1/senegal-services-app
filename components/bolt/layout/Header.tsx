@@ -31,9 +31,9 @@ export default function Header({ userType }: HeaderProps) {
                 {isHydrated ? t(`role.${userType}`) : userType}
               </p>
             </div>
-            {user?.avatar && (
+            {(user as any)?.avatar && (
               <img 
-                src={user.avatar} 
+                src={(user as any).avatar} 
                 alt={user.name}
                 className="w-7 md:w-10 h-7 md:h-10 rounded-full object-cover"
               />
