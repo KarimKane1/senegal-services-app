@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 const createClient = (url?: string, key?: string) => ({
   auth: {
     signInWithPassword: (credentials: any) => Promise.resolve({ data: { user: null, session: null }, error: null }),
-    getUser: () => Promise.resolve({ data: { user: null }, error: null })
+    getUser: (token?: string) => Promise.resolve({ data: { user: null }, error: null })
   }
 });
 import { trackServerEvent } from '../../../../lib/trackEvent';
