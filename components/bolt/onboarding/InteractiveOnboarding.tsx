@@ -169,7 +169,7 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
       }
     }
     switch (currentStepData.position) {
-      case 'top':
+      case 'bottom':
         const topLeft = Math.max(padding, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, viewportWidth - tooltipWidth - padding));
         return {
           top: `${Math.max(padding, rect.top - tooltipHeight - tooltipOffset)}px`,
