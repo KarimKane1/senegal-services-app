@@ -6,8 +6,8 @@ import { useConnectionRequests } from '../../../hooks/connections';
 export default function RequestsBanner() {
   const { user } = useAuth();
   const { data } = useConnectionRequests(user?.id);
-  const pending = (data?.items?.length as number) || 0;
-  const latest = pending > 0 ? (data!.items as any[])[0] : null;
+  const pending = ((data as any)?.items?.length as number) || 0;
+  const latest = pending > 0 ? ((data as any)!.items as any[])[0] : null;
   const [visible, setVisible] = React.useState(true);
 
   React.useEffect(() => {
