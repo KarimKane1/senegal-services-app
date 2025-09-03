@@ -98,7 +98,7 @@ export default function ServicesTab() {
     return matchesSearch && matchesCategory;
   }).map(provider => {
     // Check if this provider is recommended by people in the user's network
-    const networkRecommenders = provider.recommenders ? provider.recommenders.filter((rec: any) => 
+    const networkRecommenders = (provider as any).recommenders ? (provider as any).recommenders.filter((rec: any) => 
       connectionUserIds.includes(rec.id)
     ) : [];
     
@@ -106,7 +106,7 @@ export default function ServicesTab() {
     if (provider.name === 'Daunte Pean') {
       console.log('Daunte Pean Debug:', {
         provider,
-        recommenders: provider.recommenders,
+        recommenders: (provider as any).recommenders,
         connectionUserIds,
         networkRecommenders
       });
