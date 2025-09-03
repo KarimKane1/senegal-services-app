@@ -47,7 +47,7 @@ export async function GET() {
       .gte('created_at', oneDayAgo.toISOString());
 
     const activePhoneNumbers = new Set(
-      recentRecommendations?.map(r => r.users?.phone_e164).filter(Boolean) || []
+      recentRecommendations?.map((r: any) => r.users?.phone_e164).filter(Boolean) || []
     );
     const activeUsersDAU = activePhoneNumbers.size;
 
