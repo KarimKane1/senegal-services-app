@@ -1,6 +1,8 @@
 "use client";
 import React from 'react';
 import BoltAuthPage from '../../components/bolt/pages/AuthPage';
+
+export const dynamic = 'force-dynamic';
 import { I18nProvider } from '../../context/I18nContext';
 
 export default function AuthPage() {

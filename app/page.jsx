@@ -4,6 +4,8 @@ import Header from '../components/layout/Header.jsx';
 import Navigation from '../components/layout/Navigation.jsx';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default function Page() {
   const tabs = [
     { id: 'services', label: 'Services' },

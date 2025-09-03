@@ -4,6 +4,8 @@ import AddRecommendationModal from '../../../../components/bolt/seeker/AddRecomm
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../../../components/context/AuthContext';
 
+export const dynamic = 'force-dynamic';
+
 export default function NewRecommendationPage() {
   const router = useRouter();
   const pathname = usePathname();

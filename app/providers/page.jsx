@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
 import { useProviders } from "../../hooks/providers.ts";
+
+export const dynamic = 'force-dynamic';
 import ServiceProviderCard from "../../components/seeker/ServiceProviderCard.jsx";
 
 export default function ProvidersPage() {
