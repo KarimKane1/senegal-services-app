@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Search, Filter, Download, Eye, Star } from 'lucide-react';
+import { Search, Download, Eye, Star } from 'lucide-react';
 
 interface Provider {
   id: string;

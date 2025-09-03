@@ -25,12 +25,12 @@ export default function RootLayout({ children }) {
 
 function LanguageGate({ children }) {
   // Client wrapper to set html lang according to user metadata
-  if (typeof window === 'undefined') return children;
-  // Lazy hook usage in client
   const { user } = useAuth();
   React.useEffect(() => {
-    const html = document.documentElement;
-    if (html) html.setAttribute('lang', (user?.language || 'en'));
+    if (typeof window !== 'undefined') {
+      const html = document.documentElement;
+      if (html) html.setAttribute('lang', (user?.language || 'en'));
+    }
   }, [user?.language]);
   return children;
 }

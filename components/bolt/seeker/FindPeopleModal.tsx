@@ -140,7 +140,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
             <ul className="text-xs md:text-sm text-gray-600 space-y-1">
               <li>• Connect with people you know and trust in real life</li>
               <li>• Look for mutual connections to find trusted people</li>
-              <li>• The more connections you have, the better recommendations you'll get</li>
+              <li>• The more connections you have, the better recommendations you&apos;ll get</li>
             </ul>
           </div>
         </div>
