@@ -45,7 +45,7 @@ export default function ServicesTab() {
   const allProviders = [...mappedLive, ...availableProviders];
 
   // Get user's network connections
-  const userConnections = connectionsData?.items || [];
+  const userConnections = (connectionsData as any)?.items || [];
   const connectionUserIds = userConnections.map((conn: any) => conn.id);
   
   // Force refresh connections data when component mounts
