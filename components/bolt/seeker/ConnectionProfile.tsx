@@ -107,7 +107,10 @@ export default function ConnectionProfile({ connection, onBack }: ConnectionProf
     name: r.name,
     serviceType: r.serviceType,
     location: r.location,
+    avatar: r.avatar || '/default-avatar.png', // Default avatar if not provided
     phone: r.phone || '',
+    recommendedBy: connection.name, // This connection recommended this provider
+    isNetworkRecommendation: true, // All providers in connection profile are network recommendations
     qualities: r.qualities || [],
     watchFor: r.watchFor || [],
   }));
