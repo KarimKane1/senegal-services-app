@@ -9,8 +9,15 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb'
-    }
-  }
+    },
+    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+  },
+  // Disable static generation for all pages
+  output: 'standalone',
+  trailingSlash: false,
+  generateBuildId: async () => {
+    return 'build-' + Date.now();
+  },
 };
 
 export default nextConfig;
