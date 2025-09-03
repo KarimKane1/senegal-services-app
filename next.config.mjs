@@ -18,12 +18,6 @@ const nextConfig = {
   generateBuildId: async () => {
     return 'build-' + Date.now();
   },
-  // Force all pages to be dynamic
-  generateStaticParams: false,
-  // Disable static optimization
-  staticPageGenerationTimeout: 0,
-  // Force dynamic rendering
-  dynamicParams: true,
 };
 
 export default nextConfig;
