@@ -131,7 +131,7 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
   };
 
   const getTooltipPosition = () => {
-    if (!targetElement || currentStepData.position === 'center') {
+    if (!targetElement || currentStepData.position === 'top') {
       return {
         top: '50%',
         left: '50%',
