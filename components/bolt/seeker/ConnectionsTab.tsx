@@ -24,10 +24,10 @@ export default function ConnectionsTab() {
   const { data: sentReqData } = useSentConnectionRequests(user?.id);
   
   // Live pending requests count (only received requests should show notifications)
-  const receivedRequests = (reqData?.items?.length as number) || 0;
-  const sentRequests = (sentReqData?.items?.length as number) || 0;
+  const receivedRequests = ((reqData as any)?.items?.length as number) || 0;
+  const sentRequests = ((sentReqData as any)?.items?.length as number) || 0;
   const totalRequests = receivedRequests; // Only count received requests for notifications
-  const firstRequest = receivedRequests > 0 ? (reqData!.items as any[])[0] : null;
+  const firstRequest = receivedRequests > 0 ? ((reqData as any)!.items as any[])[0] : null;
   const [showRequestsBanner, setShowRequestsBanner] = React.useState(true);
 
   React.useEffect(() => {
