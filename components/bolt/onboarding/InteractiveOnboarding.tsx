@@ -25,7 +25,7 @@ const seekerSteps: OnboardingStep[] = [
     description: 'Find trusted service providers through your network. Let\'s show you the basics in 30 seconds.',
     targetSelector: '',
     position: 'top',
-    arrow: 'none',
+    arrow: 'up',
     action: 'setTab:connections'
   },
   {
