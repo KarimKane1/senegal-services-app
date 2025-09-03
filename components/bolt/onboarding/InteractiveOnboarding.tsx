@@ -24,7 +24,7 @@ const seekerSteps: OnboardingStep[] = [
     title: 'Welcome to Trust Network! 👋',
     description: 'Find trusted service providers through your network. Let\'s show you the basics in 30 seconds.',
     targetSelector: '',
-    position: 'center',
+    position: 'top',
     arrow: 'none',
     action: 'setTab:connections'
   },
@@ -63,7 +63,7 @@ const providerSteps: OnboardingStep[] = [
     title: 'Welcome to Trust Network! 👋',
     description: 'Grow your business through trusted recommendations. Let\'s get you started quickly.',
     targetSelector: '',
-    position: 'center',
+    position: 'top',
     arrow: 'none'
   },
   {
