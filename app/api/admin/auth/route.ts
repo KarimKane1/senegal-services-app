@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 // Use stub client to prevent build-time Supabase imports
 const createClient = (url?: string, key?: string) => ({
   auth: {
-    signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: null }),
+    signInWithPassword: (credentials: any) => Promise.resolve({ data: { user: null, session: null }, error: null }),
     getUser: () => Promise.resolve({ data: { user: null }, error: null })
   }
 });
