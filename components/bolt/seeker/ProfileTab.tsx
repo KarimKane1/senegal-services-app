@@ -44,10 +44,10 @@ export default function ProfileTab() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold mr-6 bg-indigo-100 text-indigo-600">
-                {user?.photo_url?.startsWith('emoji:') ? (
-                  <span className="text-2xl">{user.photo_url.replace('emoji:','')}</span>
-                ) : user?.photo_url ? (
-                  <img src={user.photo_url} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
+                {(user as any)?.photo_url?.startsWith('emoji:') ? (
+                  <span className="text-2xl">{(user as any).photo_url.replace('emoji:','')}</span>
+                ) : (user as any)?.photo_url ? (
+                  <img src={(user as any).photo_url} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
                 ) : (
                   <span>{user?.name?.charAt(0) || 'A'}</span>
                 )}
