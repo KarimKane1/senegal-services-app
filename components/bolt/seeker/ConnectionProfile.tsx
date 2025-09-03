@@ -18,7 +18,10 @@ interface ServiceProvider {
   name: string;
   serviceType: string;
   location: string;
+  avatar: string;
   phone: string;
+  recommendedBy?: string;
+  isNetworkRecommendation: boolean;
   qualities: string[];
   watchFor: string[];
 }
