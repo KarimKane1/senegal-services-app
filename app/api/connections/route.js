@@ -1,0 +1,295 @@
+import { NextResponse } from 'next/server';
+import { supabaseServer } from '../../../lib/supabase/server';
+
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get('userId');
+  const wantsRequests = searchParams.get('requests') === '1';
+  const wantsSentRequests = searchParams.get('sentRequests') === '1';
+  const wantsNetwork = searchParams.get('network') === '1';
+  const wantsDiscover = searchParams.get('discover') === '1';
+  const supabase = supabaseServer();
+  // For MVP: if requests=1 return a small list of pending requests derived from users
+  if (wantsRequests) {
+    if (!userId) return NextResponse.json({ items: [] });
+    try {
+      const { data: reqs, error: reqErr } = await supabase
+        .from('connection_request')
+        .select('id,requester_user_id,created_at,status')
+        .eq('recipient_user_id', userId)
+        .eq('status', 'pending')
+        .limit(50);
+      if (reqErr) throw reqErr;
+      const items = [];
+      for (const r of reqs || []) {
+        const { data: u } = await supabase
+          .from('users')
+          .select('id,name,photo_url')
+          .eq('id', r.requester_user_id)
+          .maybeSingle();
+        items.push({
+          id: r.requester_user_id,
+          name: (u && u.name) || 'Member',
+          location: 'Dakar',
+          avatar: (u && u.photo_url) || 'https://placehold.co/64x64',
+          mutualConnections: 0,
+          mutualNames: [],
+          recommendationCount: 0,
+          requestDate: r.created_at,
+        });
+      }
+      return NextResponse.json({ items });
+    } catch (e) {
+      // If table doesn't exist yet, return no requests instead of 500
+      return NextResponse.json({ items: [] });
+    }
+  }
+
+  // Handle sent requests
+  if (wantsSentRequests) {
+    if (!userId) return NextResponse.json({ items: [] });
+    try {
+      console.log('Fetching sent requests for userId:', userId);
+      const { data: reqs, error: reqErr } = await supabase
+        .from('connection_request')
+        .select('id,recipient_user_id,created_at,status')
+        .eq('requester_user_id', userId)
+        .eq('status', 'pending')
+        .limit(50);
+      if (reqErr) throw reqErr;
+      console.log('Found sent requests:', reqs?.length || 0);
+      const items = [];
+      for (const r of reqs || []) {
+        const { data: u } = await supabase
+          .from('users')
+          .select('id,name,photo_url')
+          .eq('id', r.recipient_user_id)
+          .maybeSingle();
+        items.push({
+          id: r.recipient_user_id,
+          name: (u && u.name) || 'Member',
+          location: 'Dakar',
+          avatar: (u && u.photo_url) || 'https://placehold.co/64x64',
+          mutualConnections: 0,
+          mutualNames: [],
+          recommendationCount: 0,
+          requestDate: r.created_at,
+          status: r.status,
+        });
+      }
+      return NextResponse.json({ items });
+    } catch (e) {
+      // If table doesn't exist yet, return no requests instead of 500
+      return NextResponse.json({ items: [] });
+    }
+  }
+
+  if (wantsNetwork && userId) {
+    // Return current user's connections
+    const { data, error } = await supabase
+      .from('connection')
+      .select('user_a_id,user_b_id,created_at')
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const otherIds = new Set(
+      (data || []).map((r) => (r.user_a_id === userId ? r.user_b_id : r.user_a_id))
+    );
+    const { data: users, error: usersErr } = await supabase
+      .from('users')
+      .select('id,name,photo_url')
+      .in('id', Array.from(otherIds));
+    if (usersErr) return NextResponse.json({ error: usersErr.message }, { status: 500 });
+
+    // Recommendation counts per connected user
+    const recCountByUser = new Map();
+    await Promise.all(Array.from(otherIds).map(async (oid) => {
+      const { count } = await supabase
+        .from('recommendation')
+        .select('id', { count: 'exact', head: true })
+        .eq('recommender_user_id', oid);
+      recCountByUser.set(oid, count || 0);
+    }));
+
+    const items = (users || []).map((u) => ({
+      id: u.id,
+      name: u.name || 'Member',
+      location: 'Dakar',
+      avatar: u.photo_url || 'https://placehold.co/64x64',
+      recommendationCount: recCountByUser.get(u.id) || 0,
+    }));
+    return NextResponse.json({ items });
+  }
+
+  // Discover users for Find People: only seekers with a non-empty name, exclude self
+  let discoverQuery = supabase
+    .from('users')
+    .select('id,name,photo_url,phone_e164');
+  if (wantsDiscover) {
+    discoverQuery = discoverQuery
+      .or('user_type.is.null,user_type.eq.seeker')
+      .neq('name', '');
+  } else {
+    discoverQuery = discoverQuery
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+  }
+  const { data, error } = await discoverQuery.limit(50);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const maskE164 = (e164) => {
+    if (!e164) return '';
+    const s = String(e164).replace(/\s+/g, '');
+    const m = s.match(/^(\+\d{1,3})(\d*)$/);
+    if (!m) return '';
+    const cc = m[1];
+    const rest = m[2] || '';
+    const last4 = rest.slice(-4).padStart(4, '0');
+    // Only show country code and last 4 digits
+    return `${cc} *****${last4}`;
+  };
+
+  let baseItems = (data || []).map((u) => ({
+    id: u.id,
+    name: u.name || 'Member',
+    location: 'Dakar',
+    avatar: u.photo_url || 'https://placehold.co/64x64',
+    recommendationCount: 0,
+    masked_phone: maskE164(u.phone_e164),
+  }));
+  if (wantsDiscover && userId) {
+    baseItems = baseItems.filter(u => u.id !== userId && u.name && u.name.trim() !== '');
+
+    // Exclude provider accounts by owner_user_id even if user_type is null
+    try {
+      const { data: owners } = await supabase
+        .from('provider')
+        .select('owner_user_id')
+        .not('owner_user_id', 'is', null);
+      const ownerIds = new Set((owners || []).map(o => o.owner_user_id));
+      baseItems = baseItems.filter(u => !ownerIds.has(u.id));
+    } catch {}
+
+    // Neighbors of current user for mutual counts
+    const { data: meConns } = await supabase
+      .from('connection')
+      .select('user_a_id,user_b_id')
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+    const myNeighbors = new Set((meConns || []).map(r => (r.user_a_id === userId ? r.user_b_id : r.user_a_id)));
+
+    // Exclude users already connected with current user
+    baseItems = baseItems.filter(u => !myNeighbors.has(u.id));
+
+    const withCounts = [];
+    for (const u of baseItems) {
+      // Recommendation count for user u
+      const { count: recCount } = await supabase
+        .from('recommendation')
+        .select('id', { count: 'exact', head: true })
+        .eq('recommender_user_id', u.id);
+
+      // Mutual connections between current user and u
+      const { data: uConns } = await supabase
+        .from('connection')
+        .select('user_a_id,user_b_id')
+        .or(`user_a_id.eq.${u.id},user_b_id.eq.${u.id}`);
+      const uNeighbors = new Set((uConns || []).map(r => (r.user_a_id === u.id ? r.user_b_id : r.user_a_id)));
+      let mutual = 0;
+      for (const nid of myNeighbors) {
+        if (uNeighbors.has(nid)) mutual++;
+      }
+
+      withCounts.push({ ...u, recommendationCount: recCount || 0, mutualConnections: mutual });
+    }
+    return NextResponse.json({ items: withCounts });
+  }
+  return NextResponse.json({ items: baseItems });
+}
+
+export async function POST(req) {
+  const body = await req.json().catch(() => ({}));
+  const { requester_user_id, recipient_user_id, status, requester_name, recipient_name } = body || {};
+  if (!requester_user_id || !recipient_user_id) {
+    return NextResponse.json({ error: 'requester_user_id and recipient_user_id are required' }, { status: 400 });
+  }
+  const supabase = supabaseServer();
+  try {
+    // Ensure user rows exist with latest names (MVP upsert)
+    if (requester_user_id) {
+      await supabase.from('users').upsert({ id: requester_user_id, name: requester_name || null }, { onConflict: 'id' });
+    }
+    if (recipient_user_id) {
+      await supabase.from('users').upsert({ id: recipient_user_id, name: recipient_name || null }, { onConflict: 'id' });
+    }
+    const { data, error } = await supabase
+      .from('connection_request')
+      .insert({
+        requester_user_id,
+        recipient_user_id,
+        status: status || 'pending',
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    return NextResponse.json({ id: data.id }, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: String(e.message || e) }, { status: 500 });
+  }
+}
+
+export async function PATCH(req) {
+  const body = await req.json().catch(() => ({}));
+  const { requester_user_id, recipient_user_id, action } = body || {};
+  
+  console.log('PATCH /api/connections called with:', { requester_user_id, recipient_user_id, action });
+  
+  if (!requester_user_id || !recipient_user_id || !action) {
+    console.log('Missing required fields:', { requester_user_id, recipient_user_id, action });
+    return NextResponse.json({ error: 'requester_user_id, recipient_user_id, and action are required' }, { status: 400 });
+  }
+  const supabase = supabaseServer();
+  try {
+    if (action === 'approve') {
+      // Mark request approved and create connection row
+      await supabase
+        .from('connection_request')
+        .update({ status: 'approved', responded_at: new Date().toISOString() })
+        .eq('requester_user_id', requester_user_id)
+        .eq('recipient_user_id', recipient_user_id)
+        .eq('status', 'pending');
+      // Ensure single canonical order user_a_id < user_b_id to satisfy unique constraint
+      const [a, b] = [requester_user_id, recipient_user_id].sort();
+      await supabase
+        .from('connection')
+        .insert({ user_a_id: a, user_b_id: b })
+        .select('id')
+        .single();
+      return NextResponse.json({ ok: true });
+    }
+    if (action === 'deny') {
+      await supabase
+        .from('connection_request')
+        .update({ status: 'denied', responded_at: new Date().toISOString() })
+        .eq('requester_user_id', requester_user_id)
+        .eq('recipient_user_id', recipient_user_id)
+        .eq('status', 'pending');
+      return NextResponse.json({ ok: true });
+    }
+    if (action === 'cancel') {
+      console.log('Canceling request:', { requester_user_id, recipient_user_id });
+      const { data, error } = await supabase
+        .from('connection_request')
+        .update({ status: 'cancelled', responded_at: new Date().toISOString() })
+        .eq('requester_user_id', requester_user_id)
+        .eq('recipient_user_id', recipient_user_id)
+        .eq('status', 'pending')
+        .select();
+      
+      console.log('Cancel result:', { data, error });
+      if (error) throw error;
+      return NextResponse.json({ ok: true, updated: data?.length || 0 });
+    }
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+  } catch (e) {
+    return NextResponse.json({ error: String(e.message || e) }, { status: 500 });
+  }
+}
+
+
