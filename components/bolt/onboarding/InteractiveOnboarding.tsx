@@ -249,7 +249,7 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
       >
         <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 w-72 md:w-96 border border-gray-100 mx-4 md:mx-0 max-w-[calc(100vw-32px)]">
           {/* Arrow pointing to target */}
-          {currentStepData.arrow !== 'none' && (
+          {currentStepData.arrow !== 'up' && (
             <div className="flex items-center justify-center mb-3">
               <div className="text-blue-500">
                 <ArrowIcon />
