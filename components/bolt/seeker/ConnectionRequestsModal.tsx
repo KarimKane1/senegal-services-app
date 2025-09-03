@@ -23,8 +23,8 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
     refetchSent();
   }, [refetchReceived, refetchSent]);
   
-  const receivedRequests = (receivedData?.items as any[]) || [];
-  const sentRequests = (sentData?.items as any[]) || [];
+  const receivedRequests = ((receivedData as any)?.items as any[]) || [];
+  const sentRequests = ((sentData as any)?.items as any[]) || [];
   
   // Debug logging
   React.useEffect(() => {
