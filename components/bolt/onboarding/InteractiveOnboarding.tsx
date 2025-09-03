@@ -219,7 +219,7 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
   };
 
   const ArrowIcon = () => {
-    if (currentStepData.arrow === 'none') return null;
+    if (currentStepData.arrow === 'up') return null;
     
     switch (currentStepData.arrow) {
       case 'down': return <ArrowDown className="w-6 h-6 text-blue-500" />;
