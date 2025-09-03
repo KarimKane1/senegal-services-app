@@ -74,14 +74,14 @@ export default function ProfileTab() {
               <div className="text-center">
                 <div className="bg-blue-50 rounded-xl p-6">
                   <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <div className="text-3xl font-bold text-blue-600 mb-1">{network?.items?.length ?? 0}</div>
+                  <div className="text-3xl font-bold text-blue-600 mb-1">{(network as any)?.items?.length ?? 0}</div>
                   <div className="text-gray-600 font-medium">{t('profile.connections') || 'Connections'}</div>
                 </div>
               </div>
               <div className="text-center">
                 <div className="bg-green-50 rounded-xl p-6">
                   <ThumbsUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <div className="text-3xl font-bold text-green-600 mb-1">{recs?.items?.length ?? 0}</div>
+                  <div className="text-3xl font-bold text-green-600 mb-1">{(recs as any)?.items?.length ?? 0}</div>
                   <div className="text-gray-600 font-medium">{t('profile.recommendations') || 'Recommendations'}</div>
                 </div>
               </div>
