@@ -12,12 +12,18 @@ const nextConfig = {
     },
     serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
-  // Disable static generation for all pages
+  // Disable static generation completely
   output: 'standalone',
   trailingSlash: false,
   generateBuildId: async () => {
     return 'build-' + Date.now();
   },
+  // Force all pages to be dynamic
+  generateStaticParams: false,
+  // Disable static optimization
+  staticPageGenerationTimeout: 0,
+  // Force dynamic rendering
+  dynamicParams: true,
 };
 
 export default nextConfig;
