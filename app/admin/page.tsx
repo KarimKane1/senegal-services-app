@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
+
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {

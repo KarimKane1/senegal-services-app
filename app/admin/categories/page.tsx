@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 interface ServiceCategory {
   id: string;
