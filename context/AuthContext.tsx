@@ -290,7 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           language: (sessionUser.user_metadata?.language as any) || prev?.language || 'en',
         }));
       });
-      unsub = sub.subscription;
+      unsub = sub.data.subscription;
     };
     init();
     return () => {
