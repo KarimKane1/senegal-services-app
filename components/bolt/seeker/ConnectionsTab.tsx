@@ -38,7 +38,7 @@ export default function ConnectionsTab() {
   }, [receivedRequests]);
   
   // Show accepted connections from API, fallback to local
-  const allConnections = (networkData?.items as any[]) || connections;
+  const allConnections = ((networkData as any)?.items as any[]) || connections;
 
   const handleGuestAction = () => {
     if (isGuest) {
