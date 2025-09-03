@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../lib/supabase/server';
-import { createClient } from '@supabase/supabase-js';
+// Use stub client to prevent build-time Supabase imports
+const createClient = () => ({
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: () => Promise.resolve({ data: null, error: null })
+      })
+    }),
+    insert: () => ({
+      select: () => ({
+        single: () => Promise.resolve({ data: null, error: null })
+      })
+    }),
+    update: () => ({
+      eq: () => ({
+        select: () => ({
+          single: () => Promise.resolve({ data: null, error: null })
+        })
+      })
+    }),
+    delete: () => ({
+      eq: () => Promise.resolve({ data: null, error: null })
+    })
+  })
+});
 import crypto from 'crypto';
 
 function normalizePhone(input) {

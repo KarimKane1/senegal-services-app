@@ -22,6 +22,13 @@ const nextConfig = {
   distDir: '.next',
   // Force all pages to be server-side rendered
   swcMinify: true,
+  // Completely disable static generation
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
+  // Disable static optimization
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

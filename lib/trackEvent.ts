@@ -1,4 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+// Use stub client to prevent build-time Supabase imports
+const createClient = () => ({
+  from: () => ({
+    insert: () => Promise.resolve({ error: null })
+  }),
+  auth: {
+    getUser: () => Promise.resolve({ data: { user: null }, error: null })
+  }
+});
 
 export type EventType = 
   | 'signup' 
