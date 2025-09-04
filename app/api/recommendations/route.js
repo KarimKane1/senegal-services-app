@@ -107,8 +107,18 @@ export async function POST(req) {
     const userId = user.id;
 
     const e164 = normalizePhone(phone);
+    console.log('Normalized phone:', e164);
+    
+    // Validate phone number format
+    if (!e164 || e164.length < 10) {
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+    }
+    
     const phone_hash = hashPhoneE164(e164);
     const phone_enc_hex = encryptPhone(e164);
+    
+    console.log('Phone hash:', phone_hash);
+    console.log('Phone encrypted:', phone_enc_hex ? 'yes' : 'no');
 
   // Get the service category ID from the slug
   const { data: category, error: categoryError } = await supabase
@@ -175,27 +185,33 @@ export async function POST(req) {
           .eq('id', providerId);
       } catch {}
     }
-  } else {
-    // Provider doesn't exist - create new one
-    console.log('Creating new provider:', { name, service_type, city });
-    const { data: created, error: createErr } = await supabase
-      .from('provider')
-      .insert({
-        name,
-        service_category_id,
-        service_type,
-        city,
-        phone_hash,
-        phone_enc: phone_enc_hex ? `\\x${phone_enc_hex}` : null,
-      })
-      .select('id')
-      .single();
-    if (createErr) {
-      console.error('Error creating provider:', createErr);
-      return NextResponse.json({ error: createErr.message }, { status: 500 });
+      } else {
+      // Provider doesn't exist - create new one
+      console.log('Creating new provider:', { name, service_type, city, phone_hash });
+      
+      // Validate required fields
+      if (!name || !service_type || !service_category_id) {
+        return NextResponse.json({ error: 'Missing required provider data' }, { status: 400 });
+      }
+      
+      const { data: created, error: createErr } = await supabase
+        .from('provider')
+        .insert({
+          name: name.trim(),
+          service_category_id,
+          service_type,
+          city: city ? city.trim() : null,
+          phone_hash,
+          phone_enc: phone_enc_hex ? `\\x${phone_enc_hex}` : null,
+        })
+        .select('id')
+        .single();
+      if (createErr) {
+        console.error('Error creating provider:', createErr);
+        return NextResponse.json({ error: `Failed to create provider: ${createErr.message}` }, { status: 500 });
+      }
+      providerId = created.id;
     }
-    providerId = created.id;
-  }
 
   // Record city sighting and name alias (only if different from existing)
   try {
