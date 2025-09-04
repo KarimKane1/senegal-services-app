@@ -39,7 +39,7 @@ function decryptPhone(encryptedHex) {
   try {
     // Handle different formats
     if (!encryptedHex.includes(':')) {
-      console.log('No colon found in encrypted data, returning as-is');
+      console.log('No colon found in encrypted data, returning as-is - v2');
       return encryptedHex;
     }
     
