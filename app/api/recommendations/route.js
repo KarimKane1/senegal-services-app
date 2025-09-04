@@ -329,76 +329,10 @@ export async function GET(req) {
     const userId = searchParams.get('userId');
     console.log('GET /api/recommendations - userId:', userId);
     
-    const supabase = supabaseServer();
-
-    // Start with the simplest possible query
-    let query = supabase
-      .from('recommendation')
-      .select('id,provider_id,note,created_at')
-      .order('created_at', { ascending: false });
+    // For now, just return empty data to test if the endpoint works
+    console.log('Returning empty recommendations for testing');
+    return NextResponse.json({ items: [] });
     
-    if (userId) {
-      query = query.eq('recommender_user_id', userId);
-    }
-    
-    const { data, error } = await query;
-    console.log('Simple recommendations query result:', { data: data?.length, error });
-    
-    if (error) {
-      console.error('Recommendations query error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    // Now try to get provider details separately
-    const providerIds = [...new Set((data || []).map(r => r.provider_id).filter(Boolean))];
-    let providers = {};
-    
-    if (providerIds.length > 0) {
-      const { data: providerData, error: providerError } = await supabase
-        .from('provider')
-        .select('id,name,service_type,city')
-        .in('id', providerIds);
-      
-      if (!providerError && providerData) {
-        providers = providerData.reduce((acc, p) => {
-          acc[p.id] = p;
-          return acc;
-        }, {});
-      }
-    }
-
-    // Build the final items array
-    const items = (data || []).map((row) => {
-      const provider = providers[row.provider_id] || {};
-      
-      // Parse note for qualities and watchFor
-      let qualities = [];
-      let watchFor = [];
-      const note = row.note || '';
-      const likedMatch = note.match(/Liked:\s*([^|]+)/i);
-      const watchMatch = note.match(/Watch:\s*([^|]+)/i);
-      if (likedMatch && likedMatch[1]) qualities = likedMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
-      if (watchMatch && watchMatch[1]) watchFor = watchMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
-
-      return {
-        id: row.id,
-        providerId: row.provider_id,
-        name: provider.name || 'Unknown Provider',
-        serviceType: provider.service_type || 'unknown',
-        location: provider.city || '',
-        phone: '',
-        phone_e164: '',
-        countryCode: '',
-        phone_local: '',
-        whatsapp_intent: null,
-        note: row.note,
-        qualities,
-        watchFor,
-      };
-    });
-
-    console.log('Returning recommendations:', { count: items.length });
-    return NextResponse.json({ items });
   } catch (error) {
     console.error('GET /api/recommendations error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
