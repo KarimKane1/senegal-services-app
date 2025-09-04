@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { Suspense } from 'react';
 import BoltAuthPage from '../../components/bolt/pages/AuthPage';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,9 @@ export default function AuthPage() {
   // Use a separate, page-only i18n scope that does not persist
   return (
     <I18nProvider forcedLang={undefined}>
-      <BoltAuthPage />
+      <Suspense fallback={<div>Loading...</div>}>
+        <BoltAuthPage />
+      </Suspense>
     </I18nProvider>
   );
 }
