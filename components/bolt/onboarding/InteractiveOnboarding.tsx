@@ -26,7 +26,7 @@ const seekerSteps: OnboardingStep[] = [
     targetSelector: '',
     position: 'top',
     arrow: 'up',
-    action: 'setTab:connections'
+    action: 'setTab:services'
   },
   {
     id: 'connections-tab',
@@ -35,7 +35,7 @@ const seekerSteps: OnboardingStep[] = [
     targetSelector: '[data-tab="connections"]',
     position: 'top',
     arrow: 'down',
-    action: 'setTab:connections'
+    action: 'setTab:services'
   },
   {
     id: 'services-tab',
