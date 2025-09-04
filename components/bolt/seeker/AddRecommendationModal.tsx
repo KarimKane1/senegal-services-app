@@ -87,11 +87,13 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
     const fetchProvider = async () => {
       if (!prefillId) return;
       try {
-        const { data, error } = await supabaseBrowser
+        const response = await supabaseBrowser
           .from('users')
           .select('name, phone_e164')
           .eq('id', prefillId)
           .maybeSingle();
+        const data = response?.data;
+        const error = response?.error;
         if (error) return;
         if (data) {
           const e164 = data.phone_e164 || '';
