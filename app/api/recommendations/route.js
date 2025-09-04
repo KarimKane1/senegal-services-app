@@ -127,7 +127,7 @@ export async function POST(req) {
   console.log('Found category:', { serviceType, service_category_id, service_type });
   const city = location || '';
 
-  // Find or create provider by phone_hash
+  // Find existing provider by phone_hash
   const { data: existing, error: findErr } = await supabase
     .from('provider')
     .select('id,service_category_id,service_type,city,name,phone_enc')
@@ -136,7 +136,24 @@ export async function POST(req) {
   if (findErr) return NextResponse.json({ error: findErr.message }, { status: 500 });
 
   let providerId = existing?.id;
-  if (!providerId) {
+  
+  if (existing) {
+    // Provider already exists - use their existing data
+    console.log('Provider already exists:', { id: existing.id, name: existing.name, service_type: existing.service_type });
+    providerId = existing.id;
+    
+    // Update phone encryption if needed (in case it was missing)
+    if (providerId && phone_enc_hex) {
+      try {
+        await supabase
+          .from('provider')
+          .update({ phone_enc: phone_enc_hex ? `\\x${phone_enc_hex}` : null })
+          .eq('id', providerId);
+      } catch {}
+    }
+  } else {
+    // Provider doesn't exist - create new one
+    console.log('Creating new provider:', { name, service_type, city });
     const { data: created, error: createErr } = await supabase
       .from('provider')
       .insert({
@@ -155,31 +172,10 @@ export async function POST(req) {
     }
     providerId = created.id;
   }
-  // Ensure provider.phone_enc is set/updated to the latest phone we have
-  if (providerId && phone_enc_hex) {
-    try {
-      await supabase
-        .from('provider')
-        .update({ phone_enc: phone_enc_hex ? `\\x${phone_enc_hex}` : null })
-        .eq('id', providerId);
-    } catch {}
-  }
-  // If provider exists with a generic or different type, update to the more specific one
-  if (providerId && service_category_id && existing && existing.service_category_id !== service_category_id) {
-    await supabase
-      .from('provider')
-      .update({ 
-        service_category_id, 
-        service_type,
-        city: city || existing.city || null, 
-        name: name || existing.name 
-      })
-      .eq('id', providerId);
-  }
 
-  // Record city sighting (even if same as current city) and potential name alias
+  // Record city sighting and name alias (only if different from existing)
   try {
-    if (city) {
+    if (city && (!existing || existing.city !== city)) {
       await supabase
         .from('provider_city_sighting')
         .insert({ provider_id: providerId, city, source: 'seeker' });
