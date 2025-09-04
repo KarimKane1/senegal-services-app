@@ -165,11 +165,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const fullPhone = normalizePhone(`${data.countryCode}${data.phone}`);
       
       // Check if phone number already exists
-      const { data: existingUser, error: checkError } = await supabaseBrowser
+      const result = await supabaseBrowser
         .from('users')
         .select('id, name')
         .eq('phone_e164', fullPhone)
-        .maybeSingle() as { data: { id: string; name: string } | null; error: any };
+        .maybeSingle();
+      
+      const existingUser = result.data;
+      const checkError = result.error;
       
       if (checkError) {
         console.error('Error checking existing phone:', checkError);
