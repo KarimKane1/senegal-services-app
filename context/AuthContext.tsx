@@ -256,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const init = async () => {
       try {
         const { data } = await supabaseBrowser.auth.getSession();
-        const sessionUser = data.session?.user;
+        const sessionUser = data?.session?.user;
         if (sessionUser) {
           const derivedType = (sessionUser.user_metadata?.userType as any) || getCookieUserType() || 'seeker';
           setUser({

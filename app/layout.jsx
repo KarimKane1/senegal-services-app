@@ -2,8 +2,8 @@
 import React from "react";
 import Providers from "./providers";
 import { AuthProvider } from "../context/AuthContext";
-import { useAuth } from "../components/context/AuthContext";
 import { I18nProvider } from "../context/I18nContext";
+import LanguageGate from "../components/LanguageGate";
 
 export const metadata = { title: "Jokko", description: "Provider recommendations" };
 
@@ -23,14 +23,3 @@ export default function RootLayout({ children }) {
   );
 }
 
-function LanguageGate({ children }) {
-  // Client wrapper to set html lang according to user metadata
-  const { user } = useAuth();
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const html = document.documentElement;
-      if (html) html.setAttribute('lang', (user?.language || 'en'));
-    }
-  }, [user?.language]);
-  return children;
-}
