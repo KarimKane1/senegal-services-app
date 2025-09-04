@@ -169,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('users')
         .select('id, name')
         .eq('phone_e164', fullPhone)
-        .maybeSingle();
+        .maybeSingle() as { data: { id: string; name: string } | null; error: any };
       
       if (checkError) {
         console.error('Error checking existing phone:', checkError);
