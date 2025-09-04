@@ -59,11 +59,12 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const supabase = supabaseServer();
 
     // Check if any providers are using this category
-    const { data: providersUsingCategory } = await supabase
+    const response = await supabase
       .from('provider')
       .select('id')
       .eq('service_category_id', params.id)
       .limit(1);
+    const providersUsingCategory = response.data;
 
     if (providersUsingCategory && providersUsingCategory.length > 0) {
       return NextResponse.json({ 
