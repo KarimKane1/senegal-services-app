@@ -11,6 +11,13 @@ export const dynamic = 'force-dynamic';
 export default function Page() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [active, setActive] = React.useState('services');
+
+  const tabs = [
+    { id: 'services', label: 'Services' },
+    { id: 'connections', label: 'Connections' },
+    { id: 'profile', label: 'Profile' },
+  ];
 
   // Redirect unauthenticated users to auth page
   React.useEffect(() => {
@@ -35,13 +42,6 @@ export default function Page() {
   if (!user) {
     return null;
   }
-
-  const tabs = [
-    { id: 'services', label: 'Services' },
-    { id: 'connections', label: 'Connections' },
-    { id: 'profile', label: 'Profile' },
-  ];
-  const [active, setActive] = React.useState('services');
 
   return (
     <div className="min-h-screen bg-gray-50">
