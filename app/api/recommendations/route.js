@@ -25,13 +25,19 @@ function hashPhoneE164(e164) {
 
 function encryptPhone(e164) {
   if (!e164) return null;
-  const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
-  const keyBuffer = Buffer.from(key, 'hex');
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
-  let encrypted = cipher.update(e164, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+  try {
+    const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
+    const keyBuffer = Buffer.from(key, 'hex');
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
+    let encrypted = cipher.update(e164, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
+  } catch (error) {
+    console.error('Encryption error:', error);
+    // Return a simple hash if encryption fails
+    return crypto.createHash('sha256').update(e164).digest('hex');
+  }
 }
 
 function decryptPhone(encryptedHex) {
