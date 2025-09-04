@@ -50,10 +50,11 @@ export async function POST(req) {
     }
 
     // Count recommendations for this provider
-    const { count } = await supabase
+    const countResponse = await supabase
       .from('recommendation')
       .select('id', { count: 'exact', head: true })
       .eq('provider_id', prov.id);
+    const count = countResponse?.count || 0;
 
     return NextResponse.json({ claimed: !prov.owner_user_id, provider_id: prov.id, recommendationCount: count || 0 });
   } catch (e) {

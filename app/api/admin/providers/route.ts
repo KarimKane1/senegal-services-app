@@ -29,7 +29,10 @@ export async function GET(req: Request) {
     // Add pagination
     query = query.range(offset, offset + limit - 1);
 
-    const { data: providers, error, count } = await query;
+    const response = await query;
+    const providers = response.data;
+    const error = response.error;
+    const count = (response as any)?.count || 0;
 
     if (error) {
       console.error('Error fetching providers:', error);
