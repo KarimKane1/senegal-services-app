@@ -128,13 +128,18 @@ export async function POST(req) {
   const city = location || '';
 
   // Find existing provider by phone_hash
+  console.log('Looking for provider with phone_hash:', phone_hash);
   const { data: existing, error: findErr } = await supabase
     .from('provider')
     .select('id,service_category_id,service_type,city,name,phone_enc')
     .eq('phone_hash', phone_hash)
     .maybeSingle();
-  if (findErr) return NextResponse.json({ error: findErr.message }, { status: 500 });
+  if (findErr) {
+    console.error('Error finding provider:', findErr);
+    return NextResponse.json({ error: findErr.message }, { status: 500 });
+  }
 
+  console.log('Provider lookup result:', { existing: existing?.id, name: existing?.name });
   let providerId = existing?.id;
   
   if (existing) {
@@ -193,6 +198,8 @@ export async function POST(req) {
   if (watchFor?.length) noteParts.push(`Watch: ${watchFor.join(', ')}`);
   const note = noteParts.join(' | ');
 
+  console.log('Creating recommendation with:', { providerId, userId, note });
+  
   const { data: rec, error: recErr } = await supabase
     .from('recommendation')
     .insert({ provider_id: providerId, note, recommender_user_id: userId })
