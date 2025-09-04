@@ -30,7 +30,7 @@ export default function SeekerLayout({ children }) {
     const path = window.location?.pathname || '';
     // Do not show onboarding when deep-linked to add recommendation flow
     const isDeepLinkAdd = path.includes('/seeker/recommendations/new');
-    if (!alreadyShown && (user?.isFirstLogin || isFirstLogin) && !isDeepLinkAdd) setShowOnboarding(true);
+    if (!alreadyShown && user?.isFirstLogin && !isDeepLinkAdd) setShowOnboarding(true);
   }, [user?.id, user?.isFirstLogin, isFirstLogin]);
 
   const handleCloseOnboarding = () => {
