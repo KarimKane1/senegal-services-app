@@ -86,16 +86,24 @@ export async function GET(req) {
 
   if (wantsNetwork && userId) {
     console.log('Fetching network for userId:', userId);
+    
+    // First, let's test if the connection table exists and is accessible
+    const { data: testData, error: testError } = await supabase
+      .from('connection')
+      .select('*')
+      .limit(1);
+    console.log('Connection table test:', { testData: testData?.length, testError });
+    
     // Return current user's connections
     const { data, error } = await supabase
       .from('connection')
-      .select('user_a_id,user_b_id,created_at')
-      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+      .select('user1_id,user2_id,created_at')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
     
     console.log('Connection query result:', { data: data?.length, error });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     const otherIds = new Set(
-      (data || []).map((r) => (r.user_a_id === userId ? r.user_b_id : r.user_a_id))
+      (data || []).map((r) => (r.user1_id === userId ? r.user2_id : r.user1_id))
     );
     const { data: users, error: usersErr } = await supabase
       .from('users')
@@ -174,9 +182,9 @@ export async function GET(req) {
     // Neighbors of current user for mutual counts
     const { data: meConns } = await supabase
       .from('connection')
-      .select('user_a_id,user_b_id')
-      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
-    const myNeighbors = new Set((meConns || []).map(r => (r.user_a_id === userId ? r.user_b_id : r.user_a_id)));
+      .select('user1_id,user2_id')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+    const myNeighbors = new Set((meConns || []).map(r => (r.user1_id === userId ? r.user2_id : r.user1_id)));
 
     // Exclude users already connected with current user
     baseItems = baseItems.filter(u => !myNeighbors.has(u.id));
@@ -193,9 +201,9 @@ export async function GET(req) {
       // Mutual connections between current user and u
       const { data: uConns } = await supabase
         .from('connection')
-        .select('user_a_id,user_b_id')
-        .or(`user_a_id.eq.${u.id},user_b_id.eq.${u.id}`);
-      const uNeighbors = new Set((uConns || []).map(r => (r.user_a_id === u.id ? r.user_b_id : r.user_a_id)));
+        .select('user1_id,user2_id')
+        .or(`user1_id.eq.${u.id},user2_id.eq.${u.id}`);
+      const uNeighbors = new Set((uConns || []).map(r => (r.user1_id === u.id ? r.user2_id : r.user1_id)));
       let mutual = 0;
       for (const nid of myNeighbors) {
         if (uNeighbors.has(nid)) mutual++;
@@ -266,13 +274,13 @@ export async function PATCH(req) {
       console.log('Update connection_request result:', { updateData, updateError });
       if (updateError) throw updateError;
       
-      // Ensure single canonical order user_a_id < user_b_id to satisfy unique constraint
+      // Ensure single canonical order user1_id < user2_id to satisfy unique constraint
       const [a, b] = [requester_user_id, recipient_user_id].sort();
-      console.log('Creating connection:', { user_a_id: a, user_b_id: b });
+      console.log('Creating connection:', { user1_id: a, user2_id: b });
       
       const { data: connectionData, error: connectionError } = await supabase
         .from('connection')
-        .insert({ user_a_id: a, user_b_id: b })
+        .insert({ user1_id: a, user2_id: b })
         .select('id')
         .single();
       
