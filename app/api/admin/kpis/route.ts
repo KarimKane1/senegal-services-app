@@ -20,9 +20,10 @@ export async function GET() {
     const providers = allUsers?.filter(u => u.user_type === 'provider').length || 0;
 
     // Get total providers (from provider table)
-    const { count: totalProviders } = await supabase
+    const providerResponse = await supabase
       .from('provider')
       .select('*', { count: 'exact', head: true });
+    const totalProviders = (providerResponse as any)?.count || 0;
 
     // Get new users in last 7 days (deduplicated by phone number)
     const sevenDaysAgo = new Date();
