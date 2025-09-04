@@ -77,8 +77,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const deleteResponse = await supabase
       .from('service_categories')
       .delete()
-      .eq('id', params.id)
-      .then();
+      .eq('id', params.id);
     const error = deleteResponse?.error;
 
     if (error) {
