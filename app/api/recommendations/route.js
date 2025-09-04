@@ -1,38 +1,19 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../lib/supabase/server';
-// Use stub client to prevent build-time Supabase imports
-const createClient = (url, key) => ({
-  from: () => ({
-    select: () => ({
-      eq: () => ({
-        single: () => Promise.resolve({ data: null, error: null })
-      })
-    }),
-    insert: () => ({
-      select: () => ({
-        single: () => Promise.resolve({ data: null, error: null })
-      })
-    }),
-    update: () => ({
-      eq: () => ({
-        select: () => ({
-          single: () => Promise.resolve({ data: null, error: null })
-        })
-      })
-    }),
-    delete: () => ({
-      eq: () => Promise.resolve({ data: null, error: null })
-    })
-  })
-});
 import crypto from 'crypto';
 
-function normalizePhone(input) {
-  if (!input) return '';
-  const trimmed = String(input).replace(/\s+/g, '');
-  if (trimmed.startsWith('+')) return trimmed;
-  // Default to Senegal if country code omitted
-  return `+221${trimmed.replace(/[^0-9]/g, '')}`;
+// Phone number utilities
+function normalizePhone(phone) {
+  if (!phone) return '';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('221')) return '+' + cleaned;
+  if (cleaned.startsWith('1') && cleaned.length === 11) return '+' + cleaned;
+  if (cleaned.startsWith('33') && cleaned.length === 11) return '+' + cleaned;
+  if (cleaned.startsWith('44') && cleaned.length === 12) return '+' + cleaned;
+  if (cleaned.startsWith('49') && cleaned.length === 12) return '+' + cleaned;
+  if (cleaned.startsWith('234') && cleaned.length === 13) return '+' + cleaned;
+  if (cleaned.startsWith('27') && cleaned.length === 11) return '+' + cleaned;
+  return '+' + cleaned;
 }
 
 function hashPhoneE164(e164) {
@@ -43,97 +24,31 @@ function hashPhoneE164(e164) {
 }
 
 function encryptPhone(e164) {
-  console.log('Encrypting phone:', e164);
-  const keyHex = process.env.ENCRYPTION_KEY_HEX;
-  if (!keyHex || keyHex.length !== 64) {
-    // Dev fallback: store plaintext as hex so it can be retrieved locally
-    console.log('Using fallback encryption (UTF-8 hex)');
-    try { 
-      const result = Buffer.from(e164, 'utf8').toString('hex');
-      console.log('Fallback encryption result:', result);
-      return result;
-    } catch (e) { 
-      console.log('Fallback encryption failed:', e.message);
-      return null; 
-    }
-  }
-  const key = Buffer.from(keyHex, 'hex');
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const ciphertext = Buffer.concat([cipher.update(e164, 'utf8'), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  const result = Buffer.concat([iv, tag, ciphertext]).toString('hex');
-  console.log('Encrypted phone result:', result);
-  return result;
+  if (!e164) return null;
+  const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
+  const keyBuffer = Buffer.from(key, 'hex');
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipher('aes-256-cbc', keyBuffer);
+  let encrypted = cipher.update(e164, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
 }
 
-function byteaToHex(value) {
-  if (!value) return null;
-  if (typeof value === 'string') {
-    // Postgres bytea often comes back like "\\xabcdef..."
-    const trimmed = value.startsWith('\\x') ? value.slice(2) : value;
-    return trimmed;
-  }
-  // Handle Node Buffer JSON shape { type: 'Buffer', data: [...] }
-  if (typeof value === 'object' && value !== null) {
-    if (Array.isArray(value.data)) {
-      try { return Buffer.from(value.data).toString('hex'); } catch {}
-    }
-    if (value instanceof Uint8Array || value instanceof ArrayBuffer) {
-      try { return Buffer.from(value).toString('hex'); } catch {}
-    }
-  }
+function decryptPhone(encryptedHex) {
+  if (!encryptedHex) return '';
   try {
-    return Buffer.from(value).toString('hex');
-  } catch {
-    return null;
+    const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
+    const keyBuffer = Buffer.from(key, 'hex');
+    const [ivHex, encrypted] = encryptedHex.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipher('aes-256-cbc', keyBuffer);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return '';
   }
-}
-
-function decodePhoneFromBytea(byteaVal) {
-  const hex = byteaToHex(byteaVal);
-  if (!hex) return '';
-  console.log('Decoding phone from bytea, hex:', hex);
-  
-  // First try AES-GCM decrypt with key
-  try {
-    const keyHex = process.env.ENCRYPTION_KEY_HEX;
-    if (keyHex && keyHex.length === 64) {
-      const buf = Buffer.from(hex, 'hex');
-      const iv = buf.subarray(0, 12);
-      const tag = buf.subarray(12, 28);
-      const ciphertext = buf.subarray(28);
-      const key = Buffer.from(keyHex, 'hex');
-      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-      decipher.setAuthTag(tag);
-      const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-      const phone = plaintext.toString('utf8');
-      console.log('Decrypted phone:', phone);
-      if (/^\+?\d{5,}$/.test(phone.replace(/\s/g, ''))) {
-        console.log('Phone validation passed:', phone);
-        return phone;
-      } else {
-        console.log('Phone validation failed for:', phone);
-      }
-    }
-  } catch (e) {
-    console.log('Decryption failed:', e.message);
-  }
-  
-  // Fallback: treat stored bytes as UTF-8 phone (dev/non-encrypted storage)
-  try {
-    const str = Buffer.from(hex, 'hex').toString('utf8');
-    console.log('Fallback decoded phone:', str);
-    if (/^\+?\d{5,}$/.test(str.replace(/\s/g, ''))) {
-      console.log('Fallback phone validation passed:', str);
-      return str;
-    } else {
-      console.log('Fallback phone validation failed for:', str);
-    }
-  } catch (e) {
-    console.log('Fallback decoding failed:', e.message);
-  }
-  return '';
 }
 
 export async function POST(req) {
@@ -299,24 +214,39 @@ export async function POST(req) {
     'cleanliness': 'cleanliness',
     'respectfulness': 'respectfulness',
     'reliability': 'reliability',
-    'Job quality': 'job_quality',
-    'Timeliness': 'timeliness',
-    'Clean & Organized': 'cleanliness',
-    'Professional': 'respectfulness',
-    'Reliable & Trustworthy': 'reliability',
   };
-  if (userId) {
-    const voteRows = [];
-    for (const q of qualities || []) {
-      const attr = labelToAttr[q] || null;
-      if (attr) voteRows.push({ provider_id: providerId, voter_user_id: userId, attribute: attr, vote: 'like', text: null });
+
+  for (const quality of qualities || []) {
+    const attr = labelToAttr[quality];
+    if (attr) {
+      try {
+        await supabase
+          .from('provider_attribute_vote')
+          .upsert({
+            provider_id: providerId,
+            voter_user_id: userId,
+            attribute: attr,
+            vote: 'like',
+            text: quality,
+          }, { onConflict: 'provider_id,voter_user_id,attribute,vote' });
+      } catch {}
     }
-    for (const n of watchFor || []) {
-      const attr = labelToAttr[n] || null;
-      if (attr) voteRows.push({ provider_id: providerId, voter_user_id: userId, attribute: attr, vote: 'note', text: null });
-    }
-    if (voteRows.length) {
-      await supabase.from('provider_attribute_vote').upsert(voteRows, { onConflict: 'provider_id,voter_user_id,attribute,vote' });
+  }
+
+  for (const watch of watchFor || []) {
+    const attr = labelToAttr[watch];
+    if (attr) {
+      try {
+        await supabase
+          .from('provider_attribute_vote')
+          .upsert({
+            provider_id: providerId,
+            voter_user_id: userId,
+            attribute: attr,
+            vote: 'note',
+            text: watch,
+          }, { onConflict: 'provider_id,voter_user_id,attribute,vote' });
+      } catch {}
     }
   }
 
@@ -340,150 +270,9 @@ export async function GET(req) {
 }
 
 export async function PATCH(req) {
-  const providerHashesNeeding = Array.from(new Set((data || []).map(r => r.provider?.phone_hash).filter(h => !!h)));
-  let hashToPhone = new Map();
-  if (providerHashesNeeding.length) {
-    try {
-      const { data: usersAll } = await supabase.from('users').select('phone_e164').not('phone_e164','is',null);
-      const makeHash = (e164) => {
-        const saltHex = process.env.ENCRYPTION_KEY_HEX || '';
-        const salt = Buffer.from(saltHex, 'hex');
-        const prefix = salt.length ? salt : Buffer.from('jokko-default-salt');
-        return crypto.createHash('sha256').update(Buffer.concat([prefix, Buffer.from(e164)])).digest('hex');
-      };
-      for (const u of usersAll || []) {
-        const e164 = u.phone_e164;
-        if (!e164) continue;
-        hashToPhone.set(makeHash(e164), e164);
-      }
-    } catch {}
-  }
-
-  // Batch-fetch fallback phones for providers that have no encrypted phone
-  const ownerIdsNeedingFallback = Array.from(
-    new Set(
-      (data || [])
-        .filter((r) => !r.provider?.phone_enc && r.provider?.owner_user_id)
-        .map((r) => r.provider.owner_user_id)
-    )
-  );
-  let fallbackPhoneByOwnerId = new Map();
-  if (ownerIdsNeedingFallback.length) {
-    const { data: owners } = await supabase
-      .from('users')
-      .select('id,phone_e164')
-      .in('id', ownerIdsNeedingFallback);
-    for (const o of owners || []) {
-      if (o?.id && o?.phone_e164) fallbackPhoneByOwnerId.set(o.id, o.phone_e164);
-    }
-  }
-
-  // Secondary fallback: map provider.phone_hash to users.phone_e164 via hashing
-  const hashesNeedingFallback = Array.from(
-    new Set(
-      (data || [])
-        .filter((r) => !r.provider?.phone_enc && !fallbackPhoneByOwnerId.has(r.provider?.owner_user_id || '') && r.provider?.phone_hash)
-        .map((r) => r.provider.phone_hash)
-    )
-  );
-  let phoneByHash = new Map();
-  if (hashesNeedingFallback.length) {
-    const { data: usersNonNull } = await supabase
-      .from('users')
-      .select('id,phone_e164')
-      .not('phone_e164', 'is', null);
-    for (const u of usersNonNull || []) {
-      const e164 = u?.phone_e164;
-      if (!e164) continue;
-      try {
-        const h = hashPhoneE164(e164);
-        if (hashesNeedingFallback.includes(h)) {
-          phoneByHash.set(h, e164);
-        }
-      } catch {}
-    }
-  }
-
-  const items = (data || []).map((row) => {
-    let qualities = [];
-    let watchFor = [];
-    const note = row.note || '';
-    const likedMatch = note.match(/Liked:\s*([^|]+)/i);
-    const watchMatch = note.match(/Watch:\s*([^|]+)/i);
-    if (likedMatch && likedMatch[1]) qualities = likedMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
-    if (watchMatch && watchMatch[1]) watchFor = watchMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
-    let phone = decodePhoneFromBytea(row.provider?.phone_enc);
-    if (!phone && row.phone_e164) {
-      phone = normalizePhone(row.phone_e164);
-    }
-    if (!phone && row.provider?.phone_hash) {
-      phone = hashToPhone.get(row.provider.phone_hash) || '';
-    }
-    // Fallback to users.phone_e164 if provider is owned and no encrypted phone present (batched above)
-    if (!phone && row.provider?.owner_user_id) {
-      phone = fallbackPhoneByOwnerId.get(row.provider.owner_user_id) || '';
-    }
-    if (!phone && row.provider?.phone_hash) {
-      phone = phoneByHash.get(row.provider.phone_hash) || '';
-    }
-    // Derive split fields for broader frontend compatibility
-    const e164 = phone || '';
-    let countryCode = '';
-    let localPhone = '';
-    if (e164.startsWith('+')) {
-      const match = e164.match(/^(\+\d{1,3})(.*)$/);
-      if (match) {
-        countryCode = match[1];
-        localPhone = (match[2] || '').trim();
-      }
-    }
-
-    const digits = (phone || '').replace(/\D/g, '');
-    const whatsapp_intent = digits ? `https://wa.me/${digits}` : null;
-    return {
-      id: row.id,
-      providerId: row.provider?.id || row.provider_id || null,
-      name: row.provider?.name || 'Unknown',
-      serviceType: row.provider?.service_type || '',
-      location: row.provider?.city || '',
-      phone,
-      phone_e164: e164,
-      countryCode,
-      phone_local: localPhone,
-      whatsapp_intent,
-      qualities,
-      watchFor,
-    };
-  });
-
-  return NextResponse.json({ items });
-  } catch (error) {
-    console.error('GET /api/recommendations error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
-
-
-export async function PATCH(req) {
   const supabase = supabaseServer();
-  
-  // Get the Authorization header
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Authorization header required' }, { status: 401 });
-  }
-  
-  // Extract the token
-  const token = authHeader.replace('Bearer ', '');
-  
-  // Verify the JWT token and get user info
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-  }
-
   const body = await req.json().catch(() => ({}));
-  const { id, name, phone, location, serviceType, qualities, watchFor } = body;
+  const { id, name, serviceType, phone, location, qualities = [], watchFor = [] } = body || {};
 
   if (!id) {
     return NextResponse.json({ error: 'Recommendation ID is required' }, { status: 400 });
@@ -549,90 +338,75 @@ export async function PATCH(req) {
       .from('recommendation')
       .select('provider_id')
       .eq('id', id)
-      .eq('recommender_user_id', user.id)
       .single();
 
     if (!recommendation) {
-      return NextResponse.json({ error: 'Recommendation not found or unauthorized' }, { status: 404 });
+      return NextResponse.json({ error: 'Recommendation not found' }, { status: 404 });
     }
 
-    const { error: providerError } = await supabase
+    const { error: updateError } = await supabase
       .from('provider')
       .update({
         name,
         service_category_id,
         service_type,
-        city: location,
+        city: location || '',
         phone_hash,
         phone_enc: phone_enc_hex ? `\\x${phone_enc_hex}` : null,
       })
       .eq('id', recommendation.provider_id);
 
-    if (providerError) {
-      console.error('Error updating provider:', providerError);
-      return NextResponse.json({ error: providerError.message }, { status: 500 });
+    if (updateError) {
+      console.error('Error updating provider:', updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    // Update the provider attribute votes (qualities and watchFor)
-    // First, delete existing votes for this user and provider
-    await supabase
-      .from('provider_attribute_vote')
-      .delete()
-      .eq('provider_id', recommendation.provider_id)
-      .eq('voter_user_id', user.id);
+    // Update the recommendation note
+    const noteParts = [];
+    if (qualities?.length) noteParts.push(`Liked: ${qualities.join(', ')}`);
+    if (watchFor?.length) noteParts.push(`Watch: ${watchFor.join(', ')}`);
+    const note = noteParts.join(' | ');
 
-    // Add new votes for qualities (liked attributes)
-    if (qualities && qualities.length > 0) {
-      const qualityVotes = qualities.map(quality => ({
-        provider_id: recommendation.provider_id,
-        voter_user_id: user.id,
-        attribute: quality.toLowerCase().replace(/[^a-z]/g, '_'),
-        vote: 'like'
-      }));
+    const { error: recUpdateError } = await supabase
+      .from('recommendation')
+      .update({ note })
+      .eq('id', id);
 
-      const { error: qualityError } = await supabase
-        .from('provider_attribute_vote')
-        .insert(qualityVotes);
-
-      if (qualityError) {
-        console.error('Error updating quality votes:', qualityError);
-      }
-    }
-
-    // Add new votes for watchFor (negative attributes)
-    if (watchFor && watchFor.length > 0) {
-      const watchForVotes = watchFor.map(item => ({
-        provider_id: recommendation.provider_id,
-        voter_user_id: user.id,
-        attribute: item.toLowerCase().replace(/[^a-z]/g, '_'),
-        vote: 'note'
-      }));
-
-      const { error: watchForError } = await supabase
-        .from('provider_attribute_vote')
-        .insert(watchForVotes);
-
-      if (watchForError) {
-        console.error('Error updating watchFor votes:', watchForError);
-      }
+    if (recUpdateError) {
+      console.error('Error updating recommendation:', recUpdateError);
+      return NextResponse.json({ error: recUpdateError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
-    console.error('Error updating recommendation:', error);
+    console.error('PATCH /api/recommendations error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(req) {
+  const supabase = supabaseServer();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-  const supabase = supabaseServer();
-  const { error } = await supabase.from('recommendation').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+
+  if (!id) {
+    return NextResponse.json({ error: 'Recommendation ID is required' }, { status: 400 });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('recommendation')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting recommendation:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('DELETE /api/recommendations error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
-
-
