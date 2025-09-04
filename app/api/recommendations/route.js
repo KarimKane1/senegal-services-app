@@ -324,17 +324,26 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get('userId');
-  const supabase = supabaseServer();
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+    console.log('GET /api/recommendations - userId:', userId);
+    
+    const supabase = supabaseServer();
 
-  let query = supabase
-    .from('recommendation')
-    .select('id,provider_id,note,phone_e164,provider:provider_id(id,name,service_type,city,phone_enc,owner_user_id,phone_hash)')
-    .order('created_at', { ascending: false });
-  if (userId) query = query.eq('recommender_user_id', userId);
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    let query = supabase
+      .from('recommendation')
+      .select('id,provider_id,note,phone_e164,provider:provider_id(id,name,service_type,city,phone_enc,owner_user_id,phone_hash)')
+      .order('created_at', { ascending: false });
+    if (userId) query = query.eq('recommender_user_id', userId);
+    
+    const { data, error } = await query;
+    console.log('Recommendations query result:', { data: data?.length, error });
+    
+    if (error) {
+      console.error('Recommendations query error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
   // Build hash->phone map from users to recover phones when provider.phone_enc is empty
   const providerHashesNeeding = Array.from(new Set((data || []).map(r => r.provider?.phone_hash).filter(h => !!h)));
@@ -454,6 +463,10 @@ export async function GET(req) {
   });
 
   return NextResponse.json({ items });
+  } catch (error) {
+    console.error('GET /api/recommendations error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 

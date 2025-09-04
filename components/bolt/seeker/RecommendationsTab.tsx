@@ -19,10 +19,13 @@ export default function RecommendationsTab() {
   const { isGuest, logout, user } = useAuth();
   const { t } = useI18n();
   const { categories, getLocalizedCategoryName } = useCategories();
-  const { data } = useRecommendations(user?.id);
+  const { data, error, isLoading } = useRecommendations(user?.id);
   const deleteRecommendation = useDeleteRecommendation();
   const queryClient = useQueryClient();
   const recommendations = (data?.items as any[]) || [];
+
+  // Debug logging
+  console.log('RecommendationsTab - user:', user?.id, 'data:', data, 'error:', error, 'isLoading:', isLoading);
 
   // Get translated service type name
   const getTranslatedServiceType = (serviceType: string) => {
