@@ -22,7 +22,7 @@ export default function Page() {
   // Redirect unauthenticated users to auth page
   React.useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth');
+      router.replace('/auth');
     }
   }, [user, loading, router]);
 

@@ -248,6 +248,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const markOnboardingComplete = () => {
     setIsFirstLogin(false);
+    // Save onboarding completion to user metadata
+    if (user) {
+      supabaseBrowser.auth.updateUser({
+        data: { hasCompletedOnboarding: true }
+      }).catch(error => {
+        console.error('Failed to update onboarding status:', error);
+      });
+    }
   };
 
   // Initialize session and listen for changes
@@ -265,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             phone: (sessionUser.phone || sessionUser.user_metadata?.phone_e164 || ''),
             city: sessionUser.user_metadata?.city || '',
             userType: derivedType,
-            isFirstLogin: false,
+            isFirstLogin: !sessionUser.user_metadata?.hasCompletedOnboarding,
             language: (sessionUser.user_metadata?.language as any) || 'en',
           });
           setIsFirstLogin(false);
@@ -286,7 +294,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: (sessionUser.phone || sessionUser.user_metadata?.phone_e164 || prev?.phone || ''),
           city: sessionUser.user_metadata?.city || prev?.city || '',
           userType: derivedType,
-          isFirstLogin: false,
+          isFirstLogin: !sessionUser.user_metadata?.hasCompletedOnboarding,
           language: (sessionUser.user_metadata?.language as any) || prev?.language || 'en',
         }));
       });
