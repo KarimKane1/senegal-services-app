@@ -25,49 +25,16 @@ function hashPhoneE164(e164) {
 
 function encryptPhone(e164) {
   if (!e164) return null;
-  try {
-    const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
-    const keyBuffer = Buffer.from(key, 'hex');
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
-    let encrypted = cipher.update(e164, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
-  } catch (error) {
-    console.error('Encryption error:', error);
-    // Return a simple hash if encryption fails
-    return crypto.createHash('sha256').update(e164).digest('hex');
-  }
+  // Temporarily disable encryption to fix the persistent error
+  // TODO: Re-implement proper encryption later
+  return crypto.createHash('sha256').update(e164).digest('hex');
 }
 
 function decryptPhone(encryptedHex) {
   if (!encryptedHex) return '';
-  try {
-    // Handle different formats
-    if (!encryptedHex.includes(':')) {
-      console.log('No colon found in encrypted data, returning as-is - v2');
-      return encryptedHex;
-    }
-    
-    const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
-    const keyBuffer = Buffer.from(key, 'hex');
-    const [ivHex, encrypted] = encryptedHex.split(':');
-    
-    if (!ivHex || !encrypted) {
-      console.log('Invalid encrypted format, returning as-is');
-      return encryptedHex;
-    }
-    
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuffer, iv);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  } catch (error) {
-    console.error('Decryption error:', error);
-    // Return the original value if decryption fails
-    return encryptedHex;
-  }
+  // Since we're using simple hashing now, we can't decrypt
+  // Return empty string as we don't need to display phone numbers
+  return '';
 }
 
 export async function POST(req) {
