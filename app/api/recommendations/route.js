@@ -286,7 +286,7 @@ export async function GET(req) {
     if (providerIds.length > 0) {
       const { data: providerData, error: providerError } = await supabase
         .from('provider')
-        .select('id,name,service_type,city')
+        .select('id,name,service_type,city,phone_enc,phone_hash,owner_user_id')
         .in('id', providerIds);
       
       if (!providerError && providerData) {
@@ -297,9 +297,97 @@ export async function GET(req) {
       }
     }
 
+    // Build hash->phone map from users to recover phones when provider.phone_enc is empty
+    const providerHashesNeeding = Array.from(new Set(Object.values(providers).map(p => p.phone_hash).filter(h => !!h)));
+    let hashToPhone = new Map();
+    if (providerHashesNeeding.length) {
+      try {
+        const { data: usersAll } = await supabase.from('users').select('phone_e164').not('phone_e164','is',null);
+        const makeHash = (e164) => {
+          const saltHex = process.env.ENCRYPTION_KEY_HEX || '';
+          const salt = Buffer.from(saltHex, 'hex');
+          const prefix = salt.length ? salt : Buffer.from('jokko-default-salt');
+          return crypto.createHash('sha256').update(Buffer.concat([prefix, Buffer.from(e164)])).digest('hex');
+        };
+        for (const u of usersAll || []) {
+          const e164 = u.phone_e164;
+          if (!e164) continue;
+          hashToPhone.set(makeHash(e164), e164);
+        }
+      } catch {}
+    }
+
+    // Batch-fetch fallback phones for providers that have no encrypted phone
+    const ownerIdsNeedingFallback = Array.from(
+      new Set(
+        Object.values(providers)
+          .filter((p) => !p.phone_enc && p.owner_user_id)
+          .map((p) => p.owner_user_id)
+      )
+    );
+    let fallbackPhoneByOwnerId = new Map();
+    if (ownerIdsNeedingFallback.length) {
+      try {
+        const { data: ownerPhones } = await supabase
+          .from('users')
+          .select('id,phone_e164')
+          .in('id', ownerIdsNeedingFallback);
+        for (const o of ownerPhones || []) {
+          if (o?.id && o?.phone_e164) fallbackPhoneByOwnerId.set(o.id, o.phone_e164);
+        }
+      } catch {}
+    }
+
     // Build the final items array
     const items = (data || []).map((row) => {
       const provider = providers[row.provider_id] || {};
+      
+      // Try to get phone from provider.phone_enc first
+      let phone = '';
+      let e164 = '';
+      let countryCode = '';
+      let localPhone = '';
+
+      if (provider.phone_enc) {
+        try {
+          const decrypted = decryptPhone(provider.phone_enc);
+          if (decrypted) {
+            phone = decrypted;
+            e164 = normalizePhone(decrypted);
+          }
+        } catch {}
+      }
+
+      // Fallback to hash lookup
+      if (!phone && provider.phone_hash) {
+        const hash = provider.phone_hash;
+        const found = hashToPhone.get(hash);
+        if (found) {
+          phone = found;
+          e164 = normalizePhone(found);
+        }
+      }
+
+      // Fallback to owner's phone
+      if (!phone && provider.owner_user_id) {
+        const ownerPhone = fallbackPhoneByOwnerId.get(provider.owner_user_id);
+        if (ownerPhone) {
+          phone = ownerPhone;
+          e164 = normalizePhone(ownerPhone);
+        }
+      }
+
+      // Parse phone into country code and local number
+      if (e164) {
+        const match = e164.match(/^(\+\d{1,3})(.*)$/);
+        if (match) {
+          countryCode = match[1];
+          localPhone = (match[2] || '').trim();
+        }
+      }
+
+      const digits = (phone || '').replace(/\D/g, '');
+      const whatsapp_intent = digits ? `https://wa.me/${digits}` : null;
       
       // Parse note for qualities and watchFor
       let qualities = [];
@@ -316,11 +404,11 @@ export async function GET(req) {
         name: provider.name || 'Unknown Provider',
         serviceType: provider.service_type || 'unknown',
         location: provider.city || '',
-        phone: '',
-        phone_e164: '',
-        countryCode: '',
-        phone_local: '',
-        whatsapp_intent: null,
+        phone,
+        phone_e164: e164,
+        countryCode,
+        phone_local: localPhone,
+        whatsapp_intent,
         note: row.note,
         qualities,
         watchFor,
