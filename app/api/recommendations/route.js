@@ -333,7 +333,21 @@ export async function GET(req) {
 
     let query = supabase
       .from('recommendation')
-      .select('id,provider_id,note,phone_e164,provider:provider_id(id,name,service_type,city,phone_enc,owner_user_id,phone_hash)')
+      .select(`
+        id,
+        provider_id,
+        note,
+        phone_e164,
+        provider:provider_id(
+          id,
+          name,
+          service_type,
+          city,
+          phone_enc,
+          owner_user_id,
+          phone_hash
+        )
+      `)
       .order('created_at', { ascending: false });
     if (userId) query = query.eq('recommender_user_id', userId);
     
@@ -342,7 +356,37 @@ export async function GET(req) {
     
     if (error) {
       console.error('Recommendations query error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // Try a simpler query without the join
+      const simpleQuery = supabase
+        .from('recommendation')
+        .select('id,provider_id,note,phone_e164')
+        .order('created_at', { ascending: false });
+      if (userId) simpleQuery.eq('recommender_user_id', userId);
+      
+      const { data: simpleData, error: simpleError } = await simpleQuery;
+      if (simpleError) {
+        console.error('Simple query also failed:', simpleError);
+        return NextResponse.json({ error: simpleError.message }, { status: 500 });
+      }
+      
+      // Return simple data without provider details
+      return NextResponse.json({ 
+        items: simpleData.map(row => ({
+          id: row.id,
+          providerId: row.provider_id,
+          name: 'Unknown Provider',
+          serviceType: 'unknown',
+          location: '',
+          phone: '',
+          phone_e164: row.phone_e164,
+          countryCode: '',
+          phone_local: '',
+          whatsapp_intent: null,
+          note: row.note,
+          qualities: [],
+          watchFor: [],
+        }))
+      });
     }
 
   // Build hash->phone map from users to recover phones when provider.phone_enc is empty
