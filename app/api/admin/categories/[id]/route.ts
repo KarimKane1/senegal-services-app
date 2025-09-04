@@ -63,10 +63,11 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       .from('provider')
       .select('id')
       .eq('service_category_id', params.id)
-      .limit(1);
-    const providersUsingCategory = response.data;
+      .limit(1)
+      .maybeSingle();
+    const providersUsingCategory = response?.data;
 
-    if (providersUsingCategory && providersUsingCategory.length > 0) {
+    if (providersUsingCategory) {
       return NextResponse.json({ 
         error: 'Cannot delete category. It is being used by providers. Deactivate it instead.' 
       }, { status: 400 });
