@@ -19,9 +19,9 @@ export default function Page() {
     { id: 'profile', label: 'Profile' },
   ];
 
-  // Redirect unauthenticated users to auth page
+  // Redirect unauthenticated users and guests to auth page
   React.useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && (!user || user.isGuest)) {
       router.replace('/auth');
     }
   }, [user, loading, router]);
@@ -38,8 +38,8 @@ export default function Page() {
     );
   }
 
-  // Don't render anything if no user (will redirect)
-  if (!user) {
+  // Don't render anything if no user or guest (will redirect)
+  if (!user || user.isGuest) {
     return null;
   }
 
