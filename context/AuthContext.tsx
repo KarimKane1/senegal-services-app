@@ -246,8 +246,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setShowAuthPrompt(true);
   };
 
-  const markOnboardingComplete = () => {
+  const markOnboardingComplete = async () => {
     setIsFirstLogin(false);
+    // Update user metadata to persist isFirstLogin state
+    if (user) {
+      try {
+        await supabaseBrowser.auth.updateUser({
+          data: { isFirstLogin: false }
+        });
+      } catch (error) {
+        console.error('Failed to update user metadata:', error);
+      }
+    }
   };
 
   // Initialize session and listen for changes
@@ -259,15 +269,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const sessionUser = data?.session?.user;
         if (sessionUser) {
           const derivedType = (sessionUser.user_metadata?.userType as any) || getCookieUserType() || 'seeker';
-          setUser({
-            id: sessionUser.id,
-            name: sessionUser.user_metadata?.name || '',
-            phone: (sessionUser.phone || sessionUser.user_metadata?.phone_e164 || ''),
-            city: sessionUser.user_metadata?.city || '',
-            userType: derivedType,
-            isFirstLogin: false,
-            language: (sessionUser.user_metadata?.language as any) || 'en',
-          });
+                setUser({
+        id: sessionUser.id,
+        name: sessionUser.user_metadata?.name || '',
+        phone: (sessionUser.phone || sessionUser.user_metadata?.phone_e164 || ''),
+        city: sessionUser.user_metadata?.city || '',
+        userType: derivedType,
+        isFirstLogin: sessionUser.user_metadata?.isFirstLogin !== false,
+        language: (sessionUser.user_metadata?.language as any) || 'en',
+      });
           setIsFirstLogin(false);
         }
       } finally {
@@ -286,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: (sessionUser.phone || sessionUser.user_metadata?.phone_e164 || prev?.phone || ''),
           city: sessionUser.user_metadata?.city || prev?.city || '',
           userType: derivedType,
-          isFirstLogin: false,
+          isFirstLogin: sessionUser.user_metadata?.isFirstLogin !== false,
           language: (sessionUser.user_metadata?.language as any) || prev?.language || 'en',
         }));
       });
