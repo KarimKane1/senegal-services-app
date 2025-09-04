@@ -52,44 +52,50 @@ function decryptPhone(encryptedHex) {
 }
 
 export async function POST(req) {
-  const body = await req.json().catch(() => ({}));
-  const { name, serviceType, phone, location, qualities = [], watchFor = [], recommender_user_id } = body || {};
+  try {
+    console.log('POST /api/recommendations - Starting');
+    
+    const body = await req.json().catch(() => ({}));
+    const { name, serviceType, phone, location, qualities = [], watchFor = [], recommender_user_id } = body || {};
+    console.log('Request body:', { name, serviceType, phone, location });
 
-  if (!name || !serviceType || !phone) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-  }
+    if (!name || !serviceType || !phone) {
+      console.log('Missing required fields');
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-  // Get the authorization header
-  const authHeader = req.headers.get('authorization');
-  console.log('Auth header:', authHeader);
-  
-  if (!authHeader) {
-    console.log('No auth header found');
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-  
-  // Extract the token
-  const token = authHeader.replace('Bearer ', '');
-  console.log('Token:', token ? 'Present' : 'Missing');
-  
-  // Use service role client to verify the token
-  const supabase = supabaseServer();
-  
-  // Verify the JWT token and get user info
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  console.log('User auth result:', { user: user?.id, error: authError });
-  
-  if (authError || !user) {
-    console.error('Authentication error:', authError);
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-  
-  // Use the authenticated user's ID
-  const userId = user.id;
+    // Get the authorization header
+    const authHeader = req.headers.get('authorization');
+    console.log('Auth header:', authHeader);
+    
+    if (!authHeader) {
+      console.log('No auth header found');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    
+    // Extract the token
+    const token = authHeader.replace('Bearer ', '');
+    console.log('Token:', token ? 'Present' : 'Missing');
+    
+    // Use service role client to verify the token
+    const supabase = supabaseServer();
+    console.log('Supabase client created');
+    
+    // Verify the JWT token and get user info
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    console.log('Auth verification result:', { user: user?.id, error: authError?.message });
+    
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    
+    // Use the authenticated user's ID
+    const userId = user.id;
 
-  const e164 = normalizePhone(phone);
-  const phone_hash = hashPhoneE164(e164);
-  const phone_enc_hex = encryptPhone(e164);
+    const e164 = normalizePhone(phone);
+    const phone_hash = hashPhoneE164(e164);
+    const phone_enc_hex = encryptPhone(e164);
 
   // Get the service category ID from the slug
   const { data: category, error: categoryError } = await supabase
@@ -253,7 +259,11 @@ export async function POST(req) {
     }
   }
 
-  return NextResponse.json({ id: rec.id, provider_id: providerId });
+    return NextResponse.json({ id: rec.id, provider_id: providerId });
+  } catch (error) {
+    console.error('POST /api/recommendations error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function GET(req) {
