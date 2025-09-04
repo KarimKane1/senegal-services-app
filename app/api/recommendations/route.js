@@ -28,7 +28,7 @@ function encryptPhone(e164) {
   const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
   const keyBuffer = Buffer.from(key, 'hex');
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher('aes-256-cbc', keyBuffer);
+  const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
   let encrypted = cipher.update(e164, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   return iv.toString('hex') + ':' + encrypted;
@@ -41,7 +41,7 @@ function decryptPhone(encryptedHex) {
     const keyBuffer = Buffer.from(key, 'hex');
     const [ivHex, encrypted] = encryptedHex.split(':');
     const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipher('aes-256-cbc', keyBuffer);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuffer, iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
