@@ -85,11 +85,14 @@ export async function GET(req) {
   }
 
   if (wantsNetwork && userId) {
+    console.log('Fetching network for userId:', userId);
     // Return current user's connections
     const { data, error } = await supabase
       .from('connection')
       .select('user_a_id,user_b_id,created_at')
       .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+    
+    console.log('Connection query result:', { data: data?.length, error });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     const otherIds = new Set(
       (data || []).map((r) => (r.user_a_id === userId ? r.user_b_id : r.user_a_id))
@@ -249,21 +252,34 @@ export async function PATCH(req) {
   const supabase = supabaseServer();
   try {
     if (action === 'approve') {
+      console.log('Approving connection request:', { requester_user_id, recipient_user_id });
+      
       // Mark request approved and create connection row
-      await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('connection_request')
         .update({ status: 'approved', responded_at: new Date().toISOString() })
         .eq('requester_user_id', requester_user_id)
         .eq('recipient_user_id', recipient_user_id)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .select();
+      
+      console.log('Update connection_request result:', { updateData, updateError });
+      if (updateError) throw updateError;
+      
       // Ensure single canonical order user_a_id < user_b_id to satisfy unique constraint
       const [a, b] = [requester_user_id, recipient_user_id].sort();
-      await supabase
+      console.log('Creating connection:', { user_a_id: a, user_b_id: b });
+      
+      const { data: connectionData, error: connectionError } = await supabase
         .from('connection')
         .insert({ user_a_id: a, user_b_id: b })
         .select('id')
         .single();
-      return NextResponse.json({ ok: true });
+      
+      console.log('Create connection result:', { connectionData, connectionError });
+      if (connectionError) throw connectionError;
+      
+      return NextResponse.json({ ok: true, connectionId: connectionData.id });
     }
     if (action === 'deny') {
       await supabase
