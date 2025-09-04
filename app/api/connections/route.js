@@ -31,7 +31,7 @@ export async function GET(req) {
           id: r.requester_user_id,
           name: (u && u.name) || 'Member',
           location: 'Dakar',
-          avatar: (u && u.photo_url) || 'https://placehold.co/64x64',
+          avatar: (u && u.photo_url) || null,
           mutualConnections: 0,
           mutualNames: [],
           recommendationCount: 0,
@@ -69,7 +69,7 @@ export async function GET(req) {
           id: r.recipient_user_id,
           name: (u && u.name) || 'Member',
           location: 'Dakar',
-          avatar: (u && u.photo_url) || 'https://placehold.co/64x64',
+          avatar: (u && u.photo_url) || null,
           mutualConnections: 0,
           mutualNames: [],
           recommendationCount: 0,
@@ -126,7 +126,7 @@ export async function GET(req) {
       id: u.id,
       name: u.name || 'Member',
       location: 'Dakar',
-      avatar: u.photo_url || 'https://placehold.co/64x64',
+      avatar: u.photo_url || null,
       recommendationCount: recCountByUser.get(u.id) || 0,
     }));
     return NextResponse.json({ items });
