@@ -165,7 +165,7 @@ export default function RecommendationDetailModal({ recommendation, onClose, onE
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Phone className="w-5 h-5 mr-3" />
-                  <span>{recommendation.phone}</span>
+                  <span>{recommendation.phone || recommendation.phone_e164 || 'No phone number available'}</span>
                 </div>
               </div>
             </div>
