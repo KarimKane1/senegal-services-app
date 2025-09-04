@@ -163,6 +163,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const fullPhone = normalizePhone(`${data.countryCode}${data.phone}`);
+      
+      // Check if phone number already exists
+      const { data: existingUser, error: checkError } = await supabaseBrowser
+        .from('users')
+        .select('id, name')
+        .eq('phone_e164', fullPhone)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking existing phone:', checkError);
+        throw new Error('Failed to verify phone number availability');
+      }
+      
+      if (existingUser) {
+        throw new Error(`Phone number ${fullPhone} is already registered. Please use a different number or try logging in.`);
+      }
+      
       const signUpCall = useEmailFallback
         ? supabaseBrowser.auth.signUp({
             email: phoneToDevEmail(fullPhone),
