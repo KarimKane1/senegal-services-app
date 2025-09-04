@@ -37,9 +37,21 @@ function encryptPhone(e164) {
 function decryptPhone(encryptedHex) {
   if (!encryptedHex) return '';
   try {
+    // Handle different formats
+    if (!encryptedHex.includes(':')) {
+      console.log('No colon found in encrypted data, returning as-is');
+      return encryptedHex;
+    }
+    
     const key = process.env.ENCRYPTION_KEY_HEX || 'jokko-default-key';
     const keyBuffer = Buffer.from(key, 'hex');
     const [ivHex, encrypted] = encryptedHex.split(':');
+    
+    if (!ivHex || !encrypted) {
+      console.log('Invalid encrypted format, returning as-is');
+      return encryptedHex;
+    }
+    
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuffer, iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
@@ -47,7 +59,8 @@ function decryptPhone(encryptedHex) {
     return decrypted;
   } catch (error) {
     console.error('Decryption error:', error);
-    return '';
+    // Return the original value if decryption fails
+    return encryptedHex;
   }
 }
 
