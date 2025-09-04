@@ -331,65 +331,81 @@ export async function GET(req) {
     
     const supabase = supabaseServer();
 
+    // Start with the simplest possible query
     let query = supabase
       .from('recommendation')
-      .select(`
-        id,
-        provider_id,
-        note,
-        phone_e164,
-        provider:provider_id(
-          id,
-          name,
-          service_type,
-          city,
-          phone_enc,
-          owner_user_id,
-          phone_hash
-        )
-      `)
+      .select('id,provider_id,note,created_at')
       .order('created_at', { ascending: false });
-    if (userId) query = query.eq('recommender_user_id', userId);
+    
+    if (userId) {
+      query = query.eq('recommender_user_id', userId);
+    }
     
     const { data, error } = await query;
-    console.log('Recommendations query result:', { data: data?.length, error });
+    console.log('Simple recommendations query result:', { data: data?.length, error });
     
     if (error) {
       console.error('Recommendations query error:', error);
-      // Try a simpler query without the join
-      const simpleQuery = supabase
-        .from('recommendation')
-        .select('id,provider_id,note,phone_e164')
-        .order('created_at', { ascending: false });
-      if (userId) simpleQuery.eq('recommender_user_id', userId);
-      
-      const { data: simpleData, error: simpleError } = await simpleQuery;
-      if (simpleError) {
-        console.error('Simple query also failed:', simpleError);
-        return NextResponse.json({ error: simpleError.message }, { status: 500 });
-      }
-      
-      // Return simple data without provider details
-      return NextResponse.json({ 
-        items: simpleData.map(row => ({
-          id: row.id,
-          providerId: row.provider_id,
-          name: 'Unknown Provider',
-          serviceType: 'unknown',
-          location: '',
-          phone: '',
-          phone_e164: row.phone_e164,
-          countryCode: '',
-          phone_local: '',
-          whatsapp_intent: null,
-          note: row.note,
-          qualities: [],
-          watchFor: [],
-        }))
-      });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-  // Build hash->phone map from users to recover phones when provider.phone_enc is empty
+    // Now try to get provider details separately
+    const providerIds = [...new Set((data || []).map(r => r.provider_id).filter(Boolean))];
+    let providers = {};
+    
+    if (providerIds.length > 0) {
+      const { data: providerData, error: providerError } = await supabase
+        .from('provider')
+        .select('id,name,service_type,city')
+        .in('id', providerIds);
+      
+      if (!providerError && providerData) {
+        providers = providerData.reduce((acc, p) => {
+          acc[p.id] = p;
+          return acc;
+        }, {});
+      }
+    }
+
+    // Build the final items array
+    const items = (data || []).map((row) => {
+      const provider = providers[row.provider_id] || {};
+      
+      // Parse note for qualities and watchFor
+      let qualities = [];
+      let watchFor = [];
+      const note = row.note || '';
+      const likedMatch = note.match(/Liked:\s*([^|]+)/i);
+      const watchMatch = note.match(/Watch:\s*([^|]+)/i);
+      if (likedMatch && likedMatch[1]) qualities = likedMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
+      if (watchMatch && watchMatch[1]) watchFor = watchMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
+
+      return {
+        id: row.id,
+        providerId: row.provider_id,
+        name: provider.name || 'Unknown Provider',
+        serviceType: provider.service_type || 'unknown',
+        location: provider.city || '',
+        phone: '',
+        phone_e164: '',
+        countryCode: '',
+        phone_local: '',
+        whatsapp_intent: null,
+        note: row.note,
+        qualities,
+        watchFor,
+      };
+    });
+
+    console.log('Returning recommendations:', { count: items.length });
+    return NextResponse.json({ items });
+  } catch (error) {
+    console.error('GET /api/recommendations error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req) {
   const providerHashesNeeding = Array.from(new Set((data || []).map(r => r.provider?.phone_hash).filter(h => !!h)));
   let hashToPhone = new Map();
   if (providerHashesNeeding.length) {
