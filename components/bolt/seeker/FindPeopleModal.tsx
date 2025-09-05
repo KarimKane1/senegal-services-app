@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { X, Search, MapPin, Users, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import InitialsAvatar from '../common/InitialsAvatar';
 import { useDiscoverUsers } from '../../../hooks/connections';
 
 interface FindPeopleModalProps {
@@ -19,14 +20,17 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
     id: p.id,
     name: p.name || 'Member',
     location: p.location || 'Dakar',
-    avatar: p.avatar || p.photo_url || 'https://placehold.co/64x64',
+    avatar: p.avatar || p.photo_url || null,
     phone: p.masked_phone || '',
     mutualConnections: p.mutualConnections || 0,
     mutualNames: p.mutualNames || [],
     recommendationCount: p.recommendationCount || 0,
   })), [apiPeople]);
 
-  const maskPhoneNumber = (phone: string) => phone;
+  const maskPhoneNumber = (phone: string) => {
+    // Since phone numbers are now hashed, we can't display them
+    return 'Phone available';
+  };
   const filteredPeople = people.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     person.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -81,11 +85,18 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
                 <div key={person.id} className="bg-gray-50 rounded-lg p-3 md:p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center flex-1">
-                      <img
-                        src={person.avatar}
-                        alt={person.name}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover mr-3 md:mr-4"
-                      />
+                      {person.avatar ? (
+                        <img
+                          src={person.avatar}
+                          alt={person.name}
+                          className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover mr-3 md:mr-4"
+                        />
+                      ) : (
+                        <InitialsAvatar
+                          name={person.name}
+                          className="w-10 h-10 md:w-12 md:h-12 mr-3 md:mr-4"
+                        />
+                      )}
                       <div className="flex-1">
                         <h4 className="text-sm md:text-base font-semibold text-gray-900">{person.name}</h4>
                         <div className="flex items-center text-gray-500 text-xs md:text-sm mb-1">

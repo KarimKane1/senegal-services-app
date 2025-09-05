@@ -93,11 +93,7 @@ export default function RecommendationDetailModal({ recommendation, onClose, onE
       window.open(`${preIntent}?text=${encodeURIComponent(message)}`, '_blank');
       return;
     }
-    const direct = (recommendation.phone || '').replace(/\D/g, '');
-    if (direct) {
-      window.open(`https://wa.me/${direct}?text=${encodeURIComponent(message)}`, '_blank');
-      return;
-    }
+    // Phone numbers are now hashed, so we skip direct phone usage
     const providerId = (recommendation as any).providerId || recommendation.id;
     try {
       const res = await fetch(`/api/providers/${providerId}?any=1`);
@@ -165,7 +161,7 @@ export default function RecommendationDetailModal({ recommendation, onClose, onE
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Phone className="w-5 h-5 mr-3" />
-                  <span>{recommendation.phone}</span>
+                  <span>{recommendation.phone || (recommendation as any).phone_e164 || 'No phone number available'}</span>
                 </div>
               </div>
             </div>

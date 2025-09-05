@@ -1,11 +1,5 @@
 import { NextResponse } from 'next/server';
-// Use stub client to prevent build-time Supabase imports
-const createClient = (url?: string, key?: string) => ({
-  auth: {
-    signInWithPassword: (credentials: any) => Promise.resolve({ data: { user: null, session: null }, error: null }),
-    getUser: (token?: string) => Promise.resolve({ data: { user: null }, error: null })
-  }
-});
+import { createClient } from '@supabase/supabase-js';
 import { trackServerEvent } from '../../../../lib/trackEvent';
 
 export async function POST(req: Request) {

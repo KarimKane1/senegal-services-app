@@ -26,11 +26,11 @@ export default function SeekerLayout({ children }) {
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const key = user?.id ? `onboardingShown:${user.id}` : 'onboardingShown';
-    const alreadyShown = sessionStorage.getItem(key) === '1';
+    const alreadyShown = localStorage.getItem(key) === '1';
     const path = window.location?.pathname || '';
     // Do not show onboarding when deep-linked to add recommendation flow
     const isDeepLinkAdd = path.includes('/seeker/recommendations/new');
-    if (!alreadyShown && (user?.isFirstLogin || isFirstLogin) && !isDeepLinkAdd) setShowOnboarding(true);
+    if (!alreadyShown && user?.isFirstLogin && !isDeepLinkAdd) setShowOnboarding(true);
   }, [user?.id, user?.isFirstLogin, isFirstLogin]);
 
   const handleCloseOnboarding = () => {
@@ -38,7 +38,7 @@ export default function SeekerLayout({ children }) {
     markOnboardingComplete?.();
     if (typeof window !== 'undefined') {
       const key = user?.id ? `onboardingShown:${user.id}` : 'onboardingShown';
-      sessionStorage.setItem(key, '1');
+      localStorage.setItem(key, '1');
     }
   };
 

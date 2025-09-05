@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { X, Check, UserX, MapPin, Users, Send, Inbox } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectionRequests, useSentConnectionRequests } from '../../../hooks/connections';
+import InitialsAvatar from '../common/InitialsAvatar';
 
 interface ConnectionRequestsModalProps {
   onClose: () => void;
@@ -183,11 +184,18 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
                 <div key={request.id} className="bg-gray-50 rounded-lg p-3 md:p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center flex-1">
-                      <img
-                        src={request.avatar}
-                        alt={request.name}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover mr-3 md:mr-4"
-                      />
+                      {request.avatar ? (
+                        <img
+                          src={request.avatar}
+                          alt={request.name}
+                          className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover mr-3 md:mr-4"
+                        />
+                      ) : (
+                        <InitialsAvatar
+                          name={request.name}
+                          className="w-10 h-10 md:w-12 md:h-12 mr-3 md:mr-4"
+                        />
+                      )}
                       <div className="flex-1">
                         <h4 className="text-sm md:text-base font-semibold text-gray-900">{request.name}</h4>
                         <div className="flex items-center text-gray-500 text-xs md:text-sm mb-1">

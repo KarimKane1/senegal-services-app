@@ -11,6 +11,7 @@ interface ServiceProvider {
   location: string;
   avatar: string;
   phone: string;
+  whatsapp_intent?: string;
   recommendedBy?: string;
   isNetworkRecommendation: boolean;
   qualities: string[];

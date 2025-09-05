@@ -11,6 +11,7 @@ interface ServiceProvider {
   location: string;
   avatar: string;
   phone: string;
+  whatsapp_intent?: string;
   recommendedBy?: string;
   isNetworkRecommendation: boolean;
   qualities: string[];
@@ -105,11 +106,13 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
       return;
     }
     const message = `Hi ${provider.name}, I found you through Trust Network and would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
-    const direct = (provider.phone || '').replace(/\D/g, '');
-    if (direct) {
-      window.open(`https://wa.me/${direct}?text=${encodeURIComponent(message)}`, '_blank');
+    
+    // Use whatsapp_intent if available, otherwise fetch it
+    if (provider.whatsapp_intent) {
+      window.open(`${provider.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
       return;
     }
+    
     try {
       const res = await fetch(`/api/providers/${provider.id}?any=1`);
       const info = await res.json();

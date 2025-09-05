@@ -90,7 +90,9 @@ export default function AuthPage() {
     
     if (!signUpData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!signUpData.password) newErrors.password = 'Password is required';
-    if (signUpData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (signUpData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    if (signUpData.password && !/(?=.*[a-zA-Z])/.test(signUpData.password)) newErrors.password = 'Password must contain at least one letter';
+    if (signUpData.password && !/(?=.*\d)/.test(signUpData.password)) newErrors.password = 'Password must contain at least one number';
     if (signUpData.password !== signUpData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (!signUpData.name.trim()) newErrors.name = 'Name is required';
     if (signUpData.cities.length === 0) newErrors.cities = 'At least one city is required';

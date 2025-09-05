@@ -4,7 +4,6 @@ import AddRecommendationModal from './AddRecommendationModal';
 import RecommendationDetailModal from './RecommendationDetailModal';
 import EditRecommendationModal from './EditRecommendationModal';
 import GuestPromptModal from '../common/GuestPromptModal';
-import { mockRecommendations } from '../../data/mockData';
 import { useRecommendations, useDeleteRecommendation } from '../../../hooks/recommendations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
@@ -20,10 +19,13 @@ export default function RecommendationsTab() {
   const { isGuest, logout, user } = useAuth();
   const { t } = useI18n();
   const { categories, getLocalizedCategoryName } = useCategories();
-  const { data } = useRecommendations(user?.id);
+  const { data, error, isLoading } = useRecommendations(user?.id);
   const deleteRecommendation = useDeleteRecommendation();
   const queryClient = useQueryClient();
-  const recommendations = (data?.items as any[]) || mockRecommendations;
+  const recommendations = (data?.items as any[]) || [];
+
+  // Debug logging
+  console.log('RecommendationsTab - user:', user?.id, 'data:', data, 'error:', error, 'isLoading:', isLoading);
 
   // Get translated service type name
   const getTranslatedServiceType = (serviceType: string) => {
