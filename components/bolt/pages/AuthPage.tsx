@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Users, Shield, Zap, UserCheck, Briefcase, Phone, Lock, User, MapPin, Eye, EyeOff, ChevronDown, X } from 'lucide-react';
+import { Users, Shield, Zap, UserCheck, Briefcase, Phone, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../../../context/I18nContext';
 
@@ -15,23 +15,6 @@ const countryCodes = [
   { code: '+27', country: 'South Africa', flag: '🇿🇦' },
 ];
 
-const senegalCities = [
-  'Dakar',
-  'Thiès',
-  'Kaolack',
-  'Ziguinchor',
-  'Saint-Louis',
-  'Tambacounda',
-  'Mbour',
-  'Diourbel',
-  'Louga',
-  'Kolda',
-  'Fatick',
-  'Kaffrine',
-  'Kédougou',
-  'Matam',
-  'Sédhiou'
-];
 
 export default function AuthPage() {
   const router = useRouter();
@@ -57,33 +40,12 @@ export default function AuthPage() {
     password: '',
     confirmPassword: '',
     name: '',
-    cities: [] as string[],
     userType: 'seeker' as 'seeker' | 'provider'
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>('');
-  const [showCitiesDropdown, setShowCitiesDropdown] = useState(false);
-  const citiesRef = useRef<HTMLDivElement | null>(null);
 
-  // Close cities dropdown on outside click or Escape
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (!showCitiesDropdown) return;
-      if (citiesRef.current && !citiesRef.current.contains(e.target as Node)) {
-        setShowCitiesDropdown(false);
-      }
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowCitiesDropdown(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [showCitiesDropdown]);
 
   const validateSignUp = () => {
     const newErrors: Record<string, string> = {};
@@ -95,7 +57,6 @@ export default function AuthPage() {
     if (signUpData.password && !/(?=.*\d)/.test(signUpData.password)) newErrors.password = 'Password must contain at least one number';
     if (signUpData.password !== signUpData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (!signUpData.name.trim()) newErrors.name = 'Name is required';
-    if (signUpData.cities.length === 0) newErrors.cities = 'At least one city is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -119,7 +80,7 @@ export default function AuthPage() {
     try {
       await signup({
         ...signUpData,
-        city: signUpData.cities.join(', '),
+        city: 'Dakar',
         language: lang,
       });
       const returnTo = searchParams?.get('returnTo');
@@ -152,21 +113,6 @@ export default function AuthPage() {
     }
   };
 
-  const toggleCity = (city: string) => {
-    setSignUpData(prev => ({
-      ...prev,
-      cities: prev.cities.includes(city)
-        ? prev.cities.filter(c => c !== city)
-        : [...prev.cities, city]
-    }));
-  };
-
-  const removeCity = (city: string) => {
-    setSignUpData(prev => ({
-      ...prev,
-      cities: prev.cities.filter(c => c !== city)
-    }));
-  };
 
   if (mode === 'signup') {
     return (
@@ -281,67 +227,6 @@ export default function AuthPage() {
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
 
-            {/* City */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.cities') || 'Cities'}</label>
-              <div className="relative" ref={citiesRef}>
-                <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                <div
-                  onClick={() => setShowCitiesDropdown(!showCitiesDropdown)}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer min-h-[48px] flex items-center"
-                >
-                  <div className="flex-1">
-                    {signUpData.cities.length === 0 ? (
-                      <span className="text-gray-400">{t('auth.selectCities') || 'Select cities'}</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {signUpData.cities.map(city => (
-                          <span
-                            key={city}
-                            className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-sm flex items-center"
-                          >
-                            {city}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeCity(city);
-                              }}
-                              className="ml-1 hover:text-indigo-900"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                
-                {/* Dropdown */}
-                {showCitiesDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {senegalCities.map(city => (
-                      <button
-                        key={city}
-                        type="button"
-                        onClick={() => toggleCity(city)}
-                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between ${
-                          signUpData.cities.includes(city) ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
-                        }`}
-                      >
-                        {city}
-                        {signUpData.cities.includes(city) && (
-                          <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {errors.cities && <p className="text-red-500 text-sm mt-1">{errors.cities}</p>}
-            </div>
 
             {/* Password */}
             <div>
@@ -363,6 +248,9 @@ export default function AuthPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              <p className="text-gray-500 text-xs mt-1">
+                Password must be at least 8 characters with letters and numbers
+              </p>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
 
@@ -582,9 +470,6 @@ export default function AuthPage() {
               </div>
               <h1 className="text-4xl font-bold text-gray-900 ml-3">{t('app.title')}</h1>
             </div>
-            <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-              {t('landing.tagline') || 'Digitizing trust through verified recommendations. Connect with reliable service providers through your network.'}
-            </p>
           </div>
 
           {/* Features */}

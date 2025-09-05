@@ -1,22 +1,17 @@
 import React from 'react';
-import { X, Copy, Share2, Phone } from 'lucide-react';
+import { X, Share2, Phone } from 'lucide-react';
 
 export default function InviteFriendModal({ onClose, inviteUrl, message }: { onClose: () => void; inviteUrl: string; message?: string }) {
   const text = message || `Join me on Trust Network to find and share trusted service providers: ${inviteUrl}`;
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert('Invite link copied');
-    } catch {}
-  };
 
   const shareNative = async () => {
     try {
       if ((navigator as any).share) {
         await (navigator as any).share({ title: 'Trust Network', text, url: inviteUrl });
       } else {
-        await copyToClipboard();
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(text);
+        alert('Invite link copied to clipboard');
       }
     } catch {}
   };
@@ -26,10 +21,6 @@ export default function InviteFriendModal({ onClose, inviteUrl, message }: { onC
     window.open(url, '_blank');
   };
 
-  const shareSMS = () => {
-    const url = `sms:?&body=${encodeURIComponent(text)}`;
-    window.location.href = url;
-  };
 
   return (
     <div className="fixed inset-0 z-50">
@@ -43,16 +34,22 @@ export default function InviteFriendModal({ onClose, inviteUrl, message }: { onC
             </button>
           </div>
           <div className="p-5 space-y-4">
-            <p className="text-gray-700 text-sm">Send your friend a link to join and create an account.</p>
-            <div className="bg-gray-50 rounded-lg p-3 break-all text-sm text-gray-700 border border-gray-200">{inviteUrl}</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button onClick={copyToClipboard} className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm">
-                <Copy className="w-4 h-4" /> Copy
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-blue-800 text-sm font-medium leading-relaxed">
+                Share this link with your friend so they can join Trust Network and start finding trusted service providers through your network.
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-600 text-xs font-medium mb-1">Message that will be sent:</p>
+              <div className="bg-gray-50 rounded-lg p-3 break-words text-sm text-gray-700 border border-gray-200 leading-relaxed">
+                {text}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button onClick={shareWhatsApp} className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm font-medium">
+                <Phone className="w-4 h-4" /> Share on WhatsApp
               </button>
-              <button onClick={shareWhatsApp} className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm">
-                <Phone className="w-4 h-4" /> WhatsApp
-              </button>
-              <button onClick={shareNative} className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-sm">
+              <button onClick={shareNative} className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-sm font-medium">
                 <Share2 className="w-4 h-4" /> Share
               </button>
             </div>

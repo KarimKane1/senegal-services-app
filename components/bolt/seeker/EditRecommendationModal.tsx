@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { X, User, Briefcase, MapPin, Phone } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { X, User, Briefcase, Phone } from 'lucide-react';
 import { useCategories } from '../../../lib/hooks/useCategories';
 import { useI18n } from '../../../context/I18nContext';
 
@@ -94,6 +94,7 @@ export default function EditRecommendationModal({ recommendation, onClose, onSav
     countryCode: initialCountryCode,
     serviceType: normalizeServiceType(recommendation.serviceType)
   });
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +125,20 @@ export default function EditRecommendationModal({ recommendation, onClose, onSav
     onClose();
   };
 
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
   const toggleQuality = (quality: string) => {
     setFormData(prev => ({
       ...prev,
@@ -144,7 +159,7 @@ export default function EditRecommendationModal({ recommendation, onClose, onSav
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">{t('recs.editRecommendation') || 'Edit Recommendation'}</h2>
@@ -197,7 +212,7 @@ export default function EditRecommendationModal({ recommendation, onClose, onSav
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('recs.phoneNumber') || 'Phone Number'}
+                Provider's Phone Number
               </label>
               <div className="flex">
                 <div className="relative w-24">
@@ -225,31 +240,13 @@ export default function EditRecommendationModal({ recommendation, onClose, onSav
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t('auth.phonePh') || '70 123 4567'}
+                    placeholder="Enter phone number"
                     required
                   />
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                {t('recs.location') || 'Location'}
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <select
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none text-gray-900"
-                  required
-                >
-                  {senegalCities.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
             {/* What You Liked */}
             <div>

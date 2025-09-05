@@ -21,26 +21,26 @@ interface InteractiveOnboardingProps {
 const seekerSteps: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Trust Network! 👋',
-    description: 'Find trusted service providers through your network. Let\'s show you the basics in 30 seconds.',
+    title: 'Hey there! Welcome to Trust Network! 👋',
+    description: 'I\'m here to help you find amazing service providers through people you already trust. Think of me as your personal guide - let\'s explore together!',
     targetSelector: '',
     position: 'top',
     arrow: 'up',
-    action: 'setTab:services'
+    action: 'setTab:connections'
   },
   {
     id: 'connections-tab',
-    title: 'Build Your Network',
-    description: 'Connect with friends to access their trusted recommendations.',
+    title: 'This is where the magic happens! ✨',
+    description: 'Your connections are like your personal recommendation engine. The more friends you connect with, the better suggestions I can give you. It\'s like having a whole network of people helping you find the best services!',
     targetSelector: '[data-tab="connections"]',
     position: 'top',
     arrow: 'down',
-    action: 'setTab:services'
+    action: 'setTab:connections'
   },
   {
     id: 'services-tab',
-    title: 'Find Services',
-    description: 'Browse providers recommended by your network.',
+    title: 'Ready to discover some gems? 🔍',
+    description: 'Here\'s where you\'ll find all the service providers your friends have recommended. I\'ll show you plumbers, cleaners, electricians - you name it! All vetted by people you trust.',
     targetSelector: '[data-tab="services"]',
     position: 'top',
     arrow: 'down',
@@ -48,8 +48,8 @@ const seekerSteps: OnboardingStep[] = [
   },
   {
     id: 'recommendations-tab',
-    title: 'Share Recommendations',
-    description: 'Add trusted providers to help your network.',
+    title: 'Time to pay it forward! 💝',
+    description: 'Know someone amazing? Add them here to help your friends and family. When you share great service providers, everyone wins!',
     targetSelector: '[data-tab="recommendations"]',
     position: 'top',
     arrow: 'down',
@@ -60,16 +60,16 @@ const seekerSteps: OnboardingStep[] = [
 const providerSteps: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Trust Network! 👋',
-    description: 'Grow your business through trusted recommendations. Let\'s get you started quickly.',
+    title: 'Hey! Welcome to Trust Network! 👋',
+    description: 'I\'m excited to help you grow your business through word-of-mouth recommendations. Let me show you how to get more customers through satisfied clients!',
     targetSelector: '',
     position: 'top',
     arrow: 'up'
   },
   {
     id: 'share-profile',
-    title: 'Share Your Profile',
-    description: 'Share your profile so people can recommend you to their network.',
+    title: 'Let\'s get you connected! 📱',
+    description: 'The secret to getting more recommendations? Make it super easy for happy customers to share your profile. I\'ll show you how!',
     targetSelector: '.share-tab',
     position: 'bottom',
     arrow: 'up',
@@ -287,7 +287,7 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
               onClick={handleSkip}
               className="text-gray-500 text-sm hover:text-gray-700 transition-colors font-medium"
             >
-              Skip tour
+              I'll explore on my own
             </button>
 
             <div className="flex space-x-2">
@@ -303,7 +303,7 @@ export default function InteractiveOnboarding({ onComplete, userType, onTabChang
                 onClick={handleNext}
                 className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm shadow-sm"
               >
-                {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
+                {currentStep === steps.length - 1 ? 'Let\'s go!' : 'Tell me more!'}
               </button>
             </div>
           </div>

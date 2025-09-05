@@ -10,6 +10,7 @@ interface Connection {
   name: string;
   location: string;
   avatar: string;
+  phone?: string;
   recommendationCount: number;
 }
 
@@ -39,6 +40,11 @@ export default function ConnectionProfile({ connection, onBack }: ConnectionProf
   const { user } = useAuth();
   const { t } = useI18n();
   const { data } = useRecommendations(connection.id);
+
+  const maskPhoneNumber = (phone: string) => {
+    // Since phone numbers are now hashed, we can't display them
+    return '**** **** ****';
+  };
 
   // Get translated service type name
   const getTranslatedServiceType = (serviceType: string) => {
@@ -155,10 +161,15 @@ export default function ConnectionProfile({ connection, onBack }: ConnectionProf
           {connection.name?.charAt(0) || 'C'}
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{connection.name}</h1>
-        <div className="flex items-center justify-center text-gray-600 mb-4">
+        <div className="flex items-center justify-center text-gray-600 mb-2">
           <MapPin className="w-5 h-5 mr-2" />
           {connection.location}
         </div>
+        {connection.phone && (
+          <div className="text-sm text-gray-500 mb-4">
+            {maskPhoneNumber(connection.phone)}
+          </div>
+        )}
         <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full inline-block font-medium">
           {t('connections.connected')}
         </div>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { X, Search, MapPin, Users, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import InitialsAvatar from '../common/InitialsAvatar';
@@ -13,6 +13,7 @@ interface FindPeopleModalProps {
 export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sentRequests, setSentRequests] = useState<string[]>([]);
+  const modalRef = useRef<HTMLDivElement>(null);
   const { addConnection, user } = useAuth();
   const { data } = useDiscoverUsers(user?.id);
   const apiPeople = (data?.items as any[]) || [];
@@ -28,9 +29,23 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
   })), [apiPeople]);
 
   const maskPhoneNumber = (phone: string) => {
-    // Since phone numbers are now hashed, we can't display them
-    return 'Phone available';
+    // The API already returns properly masked phone numbers with real last 4 digits
+    return phone || '**** **** ****';
   };
+
+  // Click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
   const filteredPeople = people.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     person.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -53,7 +68,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 md:p-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-900">Find People</h2>

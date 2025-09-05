@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { X, Check, UserX, MapPin, Users, Send, Inbox } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,7 @@ interface ConnectionRequestsModalProps {
 
 export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsModalProps) {
   const qc = useQueryClient();
+  const modalRef = useRef<HTMLDivElement>(null);
   const { addConnection, user } = useAuth();
   const { data: receivedData, refetch: refetchReceived } = useConnectionRequests(user?.id);
   const { data: sentData, refetch: refetchSent } = useSentConnectionRequests(user?.id);
@@ -39,6 +40,20 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
       currentRequests: activeTab === 'received' ? receivedRequests : sentRequests
     });
   }, [user?.id, receivedRequests.length, sentRequests.length, receivedData, sentData, activeTab]);
+
+  // Click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleAcceptRequest = async (requesterId: string) => {
     try {
@@ -127,7 +142,7 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 md:p-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-900">Connection Requests</h2>

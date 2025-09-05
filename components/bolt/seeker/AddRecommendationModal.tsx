@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { X, User, Briefcase, MapPin, Phone } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { X, User, Briefcase, Phone } from 'lucide-react';
 import { supabaseBrowser } from '../../../lib/supabase/client';
 import { useAddRecommendation } from '../../../hooks/recommendations';
 import { useCategories } from '../../../lib/hooks/useCategories';
@@ -81,6 +81,9 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
   const maxQualities = 3;
   const maxWatch = 2;
   const [limitMsg, setLimitMsg] = useState('');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>('');
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // If providerId is present, try to prefill name and phone from users table
   useEffect(() => {
@@ -113,8 +116,51 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefillId]);
 
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Please enter the provider\'s name';
+    }
+    
+    if (!formData.serviceType) {
+      errors.serviceType = 'Please choose what type of service this provider offers';
+    }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = 'Please enter the provider\'s phone number';
+    } else if (formData.phone.length < 8) {
+      errors.phone = 'Please enter a complete phone number (at least 8 digits)';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError('');
+    setFormErrors({});
+    
+    if (!validateForm()) {
+      setSubmitError('Please complete all required fields to add your recommendation');
+      return;
+    }
+    
     try {
       const payload = {
         name: formData.name,
@@ -129,7 +175,7 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
       onClose();
     } catch (error: any) {
       console.error('Error adding recommendation:', error);
-      alert(error?.message || 'Failed to add recommendation');
+      setSubmitError(error?.message || 'Failed to add recommendation. Please try again.');
     }
   };
 
@@ -157,7 +203,7 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">{t('recs.addTitle')}</h2>
@@ -170,6 +216,16 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* General error message */}
+            {submitError && (
+              <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 mb-6">
+                <div className="flex items-center">
+                  <span className="text-red-600 mr-3 text-xl">⚠️</span>
+                  <p className="text-red-800 font-semibold text-base">{submitError}</p>
+                </div>
+              </div>
+            )}
+            
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">
                 {t('recs.providerName')}
@@ -180,11 +236,21 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-500 text-gray-900"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-500 text-gray-900 ${
+                    formErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder={t('recs.enterProviderName')}
                   required
                 />
               </div>
+              {formErrors.name && (
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm font-medium flex items-center">
+                    <span className="mr-2 text-lg">⚠️</span>
+                    {formErrors.name}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
@@ -196,7 +262,9 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
                 <select
                   value={formData.serviceType}
                   onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none text-gray-900"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none text-gray-900 ${
+                    formErrors.serviceType ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                   disabled={categoriesLoading}
                 >
@@ -206,11 +274,19 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
                   ))}
                 </select>
               </div>
+              {formErrors.serviceType && (
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm font-medium flex items-center">
+                    <span className="mr-2 text-lg">⚠️</span>
+                    {formErrors.serviceType}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">
-                {t('recs.phoneNumber')}
+                Provider's Phone Number
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -232,31 +308,24 @@ export default function AddRecommendationModal({ onClose }: AddRecommendationMod
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="flex-1 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-500 text-gray-900"
-                    placeholder="70 123 4567"
+                    className={`flex-1 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-500 text-gray-900 ${
+                      formErrors.phone ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter phone number"
                     required
                   />
                 </div>
               </div>
+              {formErrors.phone && (
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm font-medium flex items-center">
+                    <span className="mr-2 text-lg">⚠️</span>
+                    {formErrors.phone}
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                {t('recs.location')}
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <select
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 appearance-none"
-                >
-                  {['Dakar','Thiès','Kaolack','Ziguinchor','Saint-Louis','Tambacounda','Mbour','Diourbel','Louga','Kolda','Fatick','Kaffrine','Kédougou','Matam','Sédhiou'].map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
             {/* What You Liked */}
             <div>
