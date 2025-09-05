@@ -216,8 +216,7 @@ export default function ConnectionsTab() {
                 <div className="flex justify-center mb-4">
                   <InitialsAvatar 
                     name={person.name} 
-                    size="w-16 h-16" 
-                    avatar={person.avatar}
+                    className="w-16 h-16"
                   />
                 </div>
                 <h4 className="font-medium text-gray-900 text-sm mb-4 truncate">{person.name}</h4>
