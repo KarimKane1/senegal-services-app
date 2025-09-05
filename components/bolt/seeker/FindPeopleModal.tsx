@@ -27,7 +27,10 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
     recommendationCount: p.recommendationCount || 0,
   })), [apiPeople]);
 
-  const maskPhoneNumber = (phone: string) => phone;
+  const maskPhoneNumber = (phone: string) => {
+    // Since phone numbers are now hashed, we can't display them
+    return 'Phone available';
+  };
   const filteredPeople = people.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     person.location.toLowerCase().includes(searchTerm.toLowerCase())
