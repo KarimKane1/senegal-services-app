@@ -305,10 +305,9 @@ export default function ConnectionsTab() {
             <div ref={personModalRef} className="bg-white rounded-2xl shadow-xl w-full max-w-sm border border-gray-200">
               <div className="p-6 text-center">
                 <div className="flex justify-center mb-4">
-                  <InitialsAvatar 
-                    name={showPersonModal.name} 
-                    size="w-20 h-20" 
-                    avatar={showPersonModal.avatar}
+                                    <InitialsAvatar
+                    name={showPersonModal.name}
+                    className="w-20 h-20"
                   />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{showPersonModal.name}</h3>
