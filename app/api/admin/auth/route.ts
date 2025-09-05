@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // Create Supabase client for authentication
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     // Authenticate with Supabase
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     // Create Supabase client to verify the token
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     // Verify the JWT token
