@@ -115,10 +115,26 @@ export default function ConnectionProfile({ connection, onBack }: ConnectionProf
     watchFor: r.watchFor || [],
   }));
 
-  const handleWhatsAppContact = (provider: ServiceProvider) => {
+  const handleWhatsAppContact = async (provider: ServiceProvider) => {
     const message = `Hi ${provider.name}, I found you through ${connection.name} on Trust Network and would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
-    const whatsappUrl = `https://wa.me/${provider.phone.replace(/\s/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    
+    // Use whatsapp_intent if available
+    if (provider.whatsapp_intent) {
+      window.open(`${provider.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
+      return;
+    }
+    
+    // Fetch whatsapp_intent from API
+    try {
+      const res = await fetch(`/api/providers/${provider.id}?any=1`);
+      const info = await res.json();
+      if (info?.whatsapp_intent) {
+        window.open(`${info.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
+        return;
+      }
+    } catch {}
+    
+    alert('No phone number on file for this provider');
   };
 
   return (

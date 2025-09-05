@@ -7,22 +7,36 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
     if (onViewDetails) onViewDetails();
   };
 
-  const handleWhatsAppContact = () => {
+  const handleWhatsAppContact = async () => {
     if (isGuest && onContact) {
       onContact();
       return;
     }
     const message = `Hi ${provider.name}, I found you through Trust Network and would like to inquire about your ${String(provider.service_type || provider.serviceType || '').toLowerCase()} services.`;
-    const phone = (provider.phone || '').replace(/\s/g, '');
-    if (!phone) return;
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    
+    // Use whatsapp_intent if available
+    if (provider.whatsapp_intent) {
+      window.open(`${provider.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
+      return;
+    }
+    
+    // Fetch whatsapp_intent from API
+    try {
+      const res = await fetch(`/api/providers/${provider.id}?any=1`);
+      const info = await res.json();
+      if (info?.whatsapp_intent) {
+        window.open(`${info.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
+        return;
+      }
+    } catch {}
+    
+    alert('No phone number on file for this provider');
   };
 
   const avatar = provider.avatar || 'https://placehold.co/128x128?text=' + encodeURIComponent(provider.name?.[0] || '');
   const location = provider.city || provider.location || '';
   const service = provider.service_type || provider.serviceType || '';
-  const maskedPhone = provider.phone_tail ? provider.phone_tail : (provider.phone ? provider.phone : '+221 *** ** 432');
+  const maskedPhone = 'Phone available';
 
   return (
     <div
