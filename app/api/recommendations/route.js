@@ -343,6 +343,26 @@ export async function GET(req) {
         data = allData; // Use all recommendations if user-specific query returned nothing
       }
     }
+    
+    // If still no data, check if the user ID exists in the users table
+    if ((!data || data.length === 0) && userId) {
+      console.log('Checking if user exists in users table...');
+      const { data: userExists } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+      
+      console.log('User exists in users table:', !!userExists);
+      if (!userExists) {
+        console.log('User not found in users table, returning all recommendations');
+        const { data: allRecs } = await supabase
+          .from('recommendation')
+          .select('id,provider_id,note,created_at,recommender_user_id')
+          .order('created_at', { ascending: false });
+        data = allRecs || [];
+      }
+    }
 
     // Get provider details for each recommendation
     const providerIds = [...new Set((data || []).map(r => r.provider_id).filter(Boolean))];

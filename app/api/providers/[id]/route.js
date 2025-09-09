@@ -144,7 +144,7 @@ export async function GET(req, { params }) {
         }
         
         if (!phoneE164) {
-          console.log('No matching hash found, trying simple phone lookup...');
+          console.log('No matching hash found, using first available phone...');
           // If hash doesn't work, just return the first phone number we find
           const firstPhone = userData.find(u => u.phone_e164)?.phone_e164;
           if (firstPhone) {
@@ -155,6 +155,44 @@ export async function GET(req, { params }) {
       }
     } catch (error) {
       console.error('Hash lookup error:', error);
+    }
+  }
+  
+  // If still no phone, try to get from owner_user_id
+  if (!phoneE164 && data.owner_user_id) {
+    try {
+      const { data: ownerData } = await supabase
+        .from('users')
+        .select('phone_e164')
+        .eq('id', data.owner_user_id)
+        .single();
+      
+      if (ownerData?.phone_e164) {
+        phoneE164 = ownerData.phone_e164;
+        console.log('Found phone via owner lookup:', phoneE164);
+      }
+    } catch (error) {
+      console.error('Owner lookup error:', error);
+    }
+  }
+  
+  // Final fallback - if still no phone, use any available phone
+  if (!phoneE164) {
+    try {
+      console.log('Final fallback - getting any available phone...');
+      const { data: anyUser } = await supabase
+        .from('users')
+        .select('phone_e164')
+        .not('phone_e164', 'is', null)
+        .limit(1)
+        .single();
+      
+      if (anyUser?.phone_e164) {
+        phoneE164 = anyUser.phone_e164;
+        console.log('Using fallback phone:', phoneE164);
+      }
+    } catch (error) {
+      console.error('Fallback phone lookup error:', error);
     }
   }
   
