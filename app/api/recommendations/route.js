@@ -121,12 +121,23 @@ export async function POST(req) {
     console.log('Phone encrypted:', phone_enc_hex ? 'yes' : 'no');
 
   // Get the service category ID from the slug
+  console.log('Looking for service category with slug:', serviceType);
+  
+  // First, let's see what categories exist
+  const { data: allCategories } = await supabase
+    .from('service_categories')
+    .select('slug, name, is_active')
+    .eq('is_active', true);
+  console.log('All active categories:', allCategories);
+  
   const { data: category, error: categoryError } = await supabase
     .from('service_categories')
     .select('id')
     .eq('slug', serviceType)
     .eq('is_active', true)
     .single();
+  
+  console.log('Category lookup result:', { category, categoryError, serviceType });
   
   if (categoryError || !category) {
     console.log('Invalid service type:', { serviceType, categoryError });
