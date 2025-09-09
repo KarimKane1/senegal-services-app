@@ -285,6 +285,14 @@ export async function GET(req) {
     
     const { data, error } = await query;
     console.log('Recommendations query result:', { data: data?.length, error, userId });
+    console.log('Raw recommendations data:', data);
+    
+    // Also check all recommendations in the table
+    const { data: allRecs } = await supabase
+      .from('recommendation')
+      .select('id,provider_id,recommender_user_id,note,created_at')
+      .order('created_at', { ascending: false });
+    console.log('All recommendations in database:', allRecs);
     
     if (error) {
       console.error('Recommendations query error:', error);
