@@ -544,6 +544,22 @@ export default function AuthPage() {
               >
                 {t('auth.signIn') || 'Sign In'}
               </button>
+              
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+              
+              <a
+                href="/demo"
+                className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium text-lg text-center block"
+              >
+                🎯 Try Demo (For Investors)
+              </a>
             </div>
           </div>
         </div>
