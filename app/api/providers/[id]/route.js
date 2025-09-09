@@ -114,13 +114,10 @@ export async function GET(req, { params }) {
   // Try to decrypt phone_enc first (this used to work)
   if (!phoneE164 && data.phone_enc) {
     try {
-      const hex = byteaToHex(data.phone_enc);
-      if (hex) {
-        const decrypted = decryptPhone(hex);
-        if (decrypted) {
-          phoneE164 = decrypted;
-          console.log('Found phone via decryption:', phoneE164);
-        }
+      const decrypted = decodePhoneFromBytea(data.phone_enc);
+      if (decrypted) {
+        phoneE164 = decrypted;
+        console.log('Found phone via decodePhoneFromBytea:', phoneE164);
       }
     } catch (error) {
       console.error('Phone decryption error:', error);
