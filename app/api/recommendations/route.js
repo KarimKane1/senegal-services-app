@@ -284,7 +284,7 @@ export async function GET(req) {
     }
     
     const { data, error } = await query;
-    console.log('Recommendations query result:', { data: data?.length, error });
+    console.log('Recommendations query result:', { data: data?.length, error, userId });
     
     if (error) {
       console.error('Recommendations query error:', error);
