@@ -3,6 +3,32 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 // Removed mock data import - using real data only
 import { supabaseBrowser } from '../lib/supabase/client';
 
+interface Connection {
+  id: string;
+  name: string;
+  location: string;
+  avatar: string;
+  recommendationCount: number;
+  recommendations: any[];
+  phone?: string;
+}
+
+interface ServiceProvider {
+  id: string;
+  name: string;
+  serviceType: string;
+  location: string;
+  avatar: string;
+  phone: string;
+  whatsapp_intent?: string;
+  recommendedBy?: string;
+  isNetworkRecommendation: boolean;
+  qualities: string[];
+  watchFor: string[];
+  recommenders?: { id: string; name: string }[];
+  networkRecommenders?: { id: string; name: string }[];
+}
+
 interface User {
   id: string;
   name: string;
