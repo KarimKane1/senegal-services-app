@@ -109,7 +109,7 @@ export async function GET(req, { params }) {
     ownerUserId: data.owner_user_id
   });
 
-  // Try to get phone number from encrypted data
+  // Get phone number - the data is stored as plain hex, not encrypted
   let phoneE164 = '';
   
   if (data.phone_enc) {
@@ -119,29 +119,17 @@ export async function GET(req, { params }) {
       console.log('Phone_enc hex:', hex);
       
       if (hex) {
-        // Try AES-GCM decryption first
-        const decrypted = decryptPhone(hex);
-        console.log('Decrypted phone (AES-GCM):', decrypted);
+        // The data is stored as plain hex, not encrypted
+        const plaintext = Buffer.from(hex, 'hex').toString('utf8');
+        console.log('Decoded phone from hex:', plaintext);
         
-        if (decrypted && /^\+?\d{6,}$/.test(decrypted.replace(/\s/g, ''))) {
-          phoneE164 = decrypted;
-          console.log('Found phone (AES-GCM):', phoneE164);
-        } else {
-          // Fallback: try to decode as plaintext hex
-          try {
-            const plaintext = Buffer.from(hex, 'hex').toString('utf8');
-            console.log('Decoded as plaintext:', plaintext);
-            if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
-              phoneE164 = plaintext;
-              console.log('Found phone (plaintext):', phoneE164);
-            }
-          } catch (plaintextError) {
-            console.error('Plaintext decode error:', plaintextError);
-          }
+        if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
+          phoneE164 = plaintext;
+          console.log('Found phone:', phoneE164);
         }
       }
     } catch (error) {
-      console.error('Phone decryption error:', error);
+      console.error('Phone decode error:', error);
     }
   }
   

@@ -291,7 +291,7 @@ export async function GET(req) {
     // Get recommendations for the user
     let query = supabase
       .from('recommendation')
-      .select('id,provider_id,note,created_at')
+      .select('id,provider_id,note,created_at,recommender_user_id')
       .order('created_at', { ascending: false });
     
     if (userId) {
@@ -394,22 +394,14 @@ export async function GET(req) {
             hex = hex.slice(2);
           }
           
-          const decrypted = decryptPhone(hex);
-          if (decrypted && /^\+?\d{6,}$/.test(decrypted.replace(/\s/g, ''))) {
-            phone = decrypted;
-            e164 = normalizePhone(decrypted);
-          } else {
-            // Try plaintext decode as fallback
-            try {
-              const plaintext = Buffer.from(hex, 'hex').toString('utf8');
-              if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
-                phone = plaintext;
-                e164 = normalizePhone(plaintext);
-              }
-            } catch {}
+          // The data is stored as plain hex, not encrypted
+          const plaintext = Buffer.from(hex, 'hex').toString('utf8');
+          if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
+            phone = plaintext;
+            e164 = normalizePhone(plaintext);
           }
         } catch (error) {
-          console.error('Phone decryption error in recommendations:', error);
+          console.error('Phone decode error in recommendations:', error);
         }
       }
 
