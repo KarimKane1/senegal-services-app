@@ -35,7 +35,7 @@ export default function ProfileTab() {
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-8 text-white">
           <div>
             <h2 className="text-xl font-bold mb-1">{t('profile.myProfile') || 'My Profile'}</h2>
-            <p className="opacity-90">{t('profile.subtitle') || 'Your trust network profile'}</p>
+            <p className="opacity-90">{t('profile.subtitle') || 'Your Verra profile'}</p>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export default function ProfileTab() {
                 <div className="bg-blue-50 rounded-xl p-6">
                   <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                   <div className="text-3xl font-bold text-blue-600 mb-1">{(network as any)?.items?.length ?? 0}</div>
-                  <div className="text-gray-600 font-medium">{t('profile.connections') || 'Connections'}</div>
+                  <div className="text-gray-600 font-medium">{t('profile.connections') || 'Friends'}</div>
                 </div>
               </div>
               <div className="text-center">

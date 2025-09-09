@@ -123,10 +123,10 @@ export default function AuthPage() {
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 ml-2">Trust Network</h1>
+              <h1 className="text-2xl font-bold text-gray-900 ml-2">Verra</h1>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{t('auth.createAccount') || 'Create Account'}</h2>
-            <p className="text-gray-700 mb-4">{t('auth.join') || 'Join the trusted network'}</p>
+            <p className="text-gray-700 mb-4">{t('auth.join') || 'Join Verra'}</p>
             {/* Language toggle (signup only) */}
             <div className="flex justify-center mb-2">
               <div className="inline-flex rounded-full bg-gray-100 p-1" role="radiogroup" aria-label="Language">
@@ -315,7 +315,7 @@ export default function AuthPage() {
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 ml-2">Trust Network</h1>
+              <h1 className="text-2xl font-bold text-gray-900 ml-2">Verra</h1>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{t('auth.welcomeBack') || 'Welcome Back'}</h2>
             <p className="text-gray-700 mb-4">{t('auth.signInSubtitle') || 'Sign in to your account'}</p>
@@ -462,14 +462,38 @@ export default function AuthPage() {
       </div>
       <div className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-6xl mx-auto">
+          {/* Mobile Auth Options - Only visible on mobile */}
+          <div className="block md:hidden mb-8">
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => setMode('signup')}
+                className="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors font-medium text-sm"
+              >
+                {t('auth.createAccount') || 'Create Account'}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="flex-1 bg-white text-gray-900 py-3 px-4 rounded-lg border-2 border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors font-medium text-sm"
+              >
+                {t('auth.signIn') || 'Sign In'}
+              </button>
+            </div>
+          </div>
+
           {/* Hero Section */}
           <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center justify-center mb-4">
               <div className="bg-indigo-600 p-3 rounded-xl">
                 <Shield className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-4xl font-bold text-gray-900 ml-3">{t('app.title')}</h1>
             </div>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto px-4">
+              {t('app.subtitle') || 'Find trusted service providers through recommendations from friends and family'}
+            </p>
           </div>
 
           {/* Features */}
@@ -478,7 +502,7 @@ export default function AuthPage() {
               <div className="bg-indigo-600 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Users className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-indigo-900 mb-4">{t('landing.trusted') || 'Trusted Networks'}</h3>
+              <h3 className="text-2xl font-bold text-indigo-900 mb-4">{t('landing.trusted') || 'Verra Networks'}</h3>
               <p className="text-indigo-800 text-lg leading-relaxed">{t('landing.trustedText') || 'Build your network of trusted service providers and connections'}</p>
             </div>
             <div className="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-lg border-2 border-green-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -497,11 +521,11 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* Auth Options */}
-          <div className="max-w-lg mx-auto">
+          {/* Auth Options - Hidden on mobile, visible on desktop */}
+          <div className="hidden md:block max-w-lg mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('landing.getStarted') || 'Get Started'}</h2>
-              <p className="text-gray-700">{t('landing.getStartedText') || 'Join the trusted network or browse as a guest'}</p>
+              <p className="text-gray-700">{t('landing.getStartedText') || 'Join Verra to get started'}</p>
             </div>
 
             <div className="space-y-4">
@@ -519,17 +543,6 @@ export default function AuthPage() {
                 className="w-full bg-white text-gray-900 py-4 px-6 rounded-xl border-2 border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors font-medium text-lg"
               >
                 {t('auth.signIn') || 'Sign In'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={async () => {
-                  await continueAsGuest('seeker');
-                  router.replace('/seeker/services');
-                }}
-                className="w-full text-gray-600 py-4 px-6 rounded-xl hover:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium text-lg"
-              >
-                {t('landing.browseGuest') || 'Browse as Guest'}
               </button>
             </div>
           </div>

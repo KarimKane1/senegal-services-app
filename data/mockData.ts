@@ -37,13 +37,10 @@ export interface Recommendation {
 export const serviceCategories = [
   'All',
   'Plumber',
-  'Cleaner',
-  'Nanny',
   'Electrician',
+  'HVAC',
   'Carpenter',
-  'Hair',
-  'Henna',
-  'Chef',
+  'Handyman',
 ];
 
 export const mockConnections: Connection[] = [

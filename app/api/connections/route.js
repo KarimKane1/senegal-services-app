@@ -287,13 +287,13 @@ export async function PATCH(req) {
       const { data: connectionData, error: connectionError } = await supabase
         .from('connection')
         .insert({ user_a_id: a, user_b_id: b })
-        .select('id')
+        .select('user_a_id, user_b_id')
         .single();
       
       console.log('Create connection result:', { connectionData, connectionError });
       if (connectionError) throw connectionError;
       
-      return NextResponse.json({ ok: true, connectionId: connectionData.id });
+      return NextResponse.json({ ok: true, connectionId: `${a}-${b}` });
     }
     if (action === 'deny') {
       await supabase

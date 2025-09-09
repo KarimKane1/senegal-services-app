@@ -2,12 +2,12 @@ import React from 'react';
 import { X, Share2, Phone } from 'lucide-react';
 
 export default function InviteFriendModal({ onClose, inviteUrl, message }: { onClose: () => void; inviteUrl: string; message?: string }) {
-  const text = message || `Join me on Trust Network to find and share trusted service providers: ${inviteUrl}`;
+  const text = message || `Join me on Verra to find and share trusted service providers: ${inviteUrl}`;
 
   const shareNative = async () => {
     try {
       if ((navigator as any).share) {
-        await (navigator as any).share({ title: 'Trust Network', text, url: inviteUrl });
+        await (navigator as any).share({ title: 'Verra', text, url: inviteUrl });
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(text);
@@ -35,9 +35,9 @@ export default function InviteFriendModal({ onClose, inviteUrl, message }: { onC
           </div>
           <div className="p-5 space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-blue-800 text-sm font-medium leading-relaxed">
-                Share this link with your friend so they can join Trust Network and start finding trusted service providers through your network.
-              </p>
+        <p className="text-blue-800 text-sm font-medium leading-relaxed">
+          Share this link with your friend so they can join Verra and start finding trusted service providers through your network.
+        </p>
             </div>
             <div>
               <p className="text-gray-600 text-xs font-medium mb-1">Message that will be sent:</p>

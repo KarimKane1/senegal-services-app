@@ -25,7 +25,7 @@ export default function GuestPromptModal({ onClose }: GuestPromptModalProps) {
             <div className="bg-indigo-600 p-2 rounded-lg mr-3">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Join Trust Network</h2>
+            <h2 className="text-xl font-bold text-gray-900">Join Verra</h2>
           </div>
           <button
             onClick={onClose}
@@ -40,7 +40,7 @@ export default function GuestPromptModal({ onClose }: GuestPromptModalProps) {
             To access this feature, you need to create an account or sign in.
           </p>
           <p className="text-sm text-gray-500">
-            Join thousands of users building trusted networks for reliable service recommendations.
+            Join thousands of users building their networks on Verra for reliable service recommendations.
           </p>
         </div>
 

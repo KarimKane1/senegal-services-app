@@ -94,7 +94,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
 
           {/* Suggested People */}
           <div className="mb-4">
-            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Suggested Connections</h3>
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Suggested Friends</h3>
             <div className="space-y-3 md:space-y-4">
               {filteredPeople.map((person) => (
                 <div key={person.id} className="bg-gray-50 rounded-lg p-3 md:p-4">
@@ -150,7 +150,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
                       ) : (
                         <>
                           <UserPlus className="w-3 md:w-4 h-3 md:h-4 mr-1 inline" />
-                          Connect
+                          Add Friend
                         </>
                       )}
                     </button>
@@ -164,7 +164,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
           <div className="bg-blue-50 rounded-lg p-3 md:p-4">
             <h4 className="text-sm md:text-base font-semibold text-gray-900 mb-2">Tips for Growing Your Network</h4>
             <ul className="text-xs md:text-sm text-gray-600 space-y-1">
-              <li>• Connect with people you know and trust in real life</li>
+              <li>• Add people you know and trust in real life as friends</li>
               <li>• Look for mutual connections to find trusted people</li>
               <li>• The more connections you have, the better recommendations you&apos;ll get</li>
             </ul>

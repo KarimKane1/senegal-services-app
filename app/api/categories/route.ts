@@ -5,20 +5,16 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const supabase = supabaseServer();
+    // Return the 5 categories we want
+    const categories = [
+      { id: '1', name: 'Plumber', slug: 'plumber', description: 'Plumbing services and repairs' },
+      { id: '2', name: 'Electrician', slug: 'electrician', description: 'Electrical services and repairs' },
+      { id: '3', name: 'HVAC', slug: 'hvac', description: 'Heating, ventilation, and air conditioning services' },
+      { id: '4', name: 'Carpenter', slug: 'carpenter', description: 'Carpentry and woodworking services' },
+      { id: '5', name: 'Handyman', slug: 'handyman', description: 'General handyman and repair services' }
+    ];
 
-    const { data: categories, error } = await supabase
-      .from('service_categories')
-      .select('id, name, slug, description')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching categories:', error);
-      return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
-    }
-
-    return NextResponse.json({ categories: categories || [] });
+    return NextResponse.json({ categories });
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });

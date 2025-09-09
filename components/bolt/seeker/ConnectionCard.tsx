@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { useI18n } from '../../../context/I18nContext';
 
 interface Connection {
@@ -27,13 +27,9 @@ export default function ConnectionCard({ connection, onViewProfile, isGuest = fa
         <div className="w-10 md:w-16 h-10 md:h-16 rounded-full mx-auto mb-2 md:mb-4 bg-indigo-100 flex items-center justify-center border-2 border-gray-100 text-indigo-600 text-base md:text-2xl">
           {connection.name?.charAt(0) || 'A'}
         </div>
-        <h3 className="text-xs md:text-lg font-semibold text-gray-900 mb-1 md:mb-2 leading-tight">
+        <h3 className="text-xs md:text-lg font-semibold text-gray-900 mb-2 md:mb-4 leading-tight">
           {isGuest ? connection.name.replace(/\w/g, '*') : connection.name}
         </h3>
-        <div className="flex items-center justify-center text-gray-500 text-xs md:text-sm mb-2 md:mb-4">
-          <MapPin className="w-3 md:w-4 h-3 md:h-4 mr-1" />
-          {connection.location}
-        </div>
         
         <div className="bg-indigo-50 rounded-md md:rounded-lg py-1 md:py-3 px-2 md:px-4 mb-2 md:mb-6">
           <span className="text-indigo-600 font-medium text-xs">

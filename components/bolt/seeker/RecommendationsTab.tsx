@@ -41,21 +41,11 @@ export default function RecommendationsTab() {
     // If no exact match, try common variations
     if (!translatedName || translatedName === translationKey) {
       const variations: { [key: string]: string } = {
-        'cleaner': 'category.cleaner',
         'plumber': 'category.plumber',
         'electrician': 'category.electrician',
+        'hvac': 'category.hvac',
         'carpenter': 'category.carpenter',
-        'nanny': 'category.nanny',
-        'hair': 'category.hair',
-        'henna': 'category.henna',
-        'chef': 'category.chef',
-        'cook': 'category.cook',
-        'tech_repair': 'category.tech_repair',
-        'gardener': 'category.gardener',
-        'driver': 'category.driver',
-        'security': 'category.security',
-        'painter': 'category.painter',
-        'mechanic': 'category.mechanic'
+        'handyman': 'category.handyman'
       };
       
       const variationKey = variations[normalizedType];
@@ -251,7 +241,7 @@ export default function RecommendationsTab() {
                     if (isGuest) {
                       handleGuestAction();
                     } else {
-                      const text = `Hi ${recommendation.name}, I found you through Trust Network and would like to inquire about your ${String(recommendation.serviceType || '').toLowerCase()} services.`;
+                      const text = `Hi ${recommendation.name}, I found you through Verra, it's an app for friends to refer ${String(recommendation.serviceType || '').toLowerCase()} they like. I would like to inquire about your ${String(recommendation.serviceType || '').toLowerCase()} services.`;
                       const raw = (recommendation.phone || recommendation.phone_e164 || '');
                       const phone = raw.replace(/\D/g, ''); // WhatsApp expects digits only
                       if (phone) {

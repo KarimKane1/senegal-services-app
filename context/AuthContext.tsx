@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { mockConnections, Connection, ServiceProvider } from '../data/mockData';
+// Removed mock data import - using real data only
 import { supabaseBrowser } from '../lib/supabase/client';
 
 interface User {

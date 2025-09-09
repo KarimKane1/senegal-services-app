@@ -46,21 +46,11 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
     // If no exact match, try common variations
     if (!translatedName || translatedName === translationKey) {
       const variations: { [key: string]: string } = {
-        'cleaner': 'category.cleaner',
         'plumber': 'category.plumber',
         'electrician': 'category.electrician',
+        'hvac': 'category.hvac',
         'carpenter': 'category.carpenter',
-        'nanny': 'category.nanny',
-        'hair': 'category.hair',
-        'henna': 'category.henna',
-        'chef': 'category.chef',
-        'cook': 'category.cook',
-        'tech_repair': 'category.tech_repair',
-        'gardener': 'category.gardener',
-        'driver': 'category.driver',
-        'security': 'category.security',
-        'painter': 'category.painter',
-        'mechanic': 'category.mechanic'
+        'handyman': 'category.handyman'
       };
       
       const variationKey = variations[normalizedType];
@@ -105,7 +95,7 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
       onContact();
       return;
     }
-    const message = `Hi ${provider.name}, I found you through Trust Network and would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
+    const message = `Hi ${provider.name}, I found you through Verra, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
     
     // Use whatsapp_intent if available, otherwise fetch it
     if (provider.whatsapp_intent) {
@@ -161,10 +151,17 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
                   <Users className="w-4 h-4 text-green-600 mr-2" />
                   <p className="text-sm text-green-800">
                     <span className="font-medium">
-                      {provider.networkRecommenders.length === 1 
-                        ? `${t('services.recommendedBy')} 1 ${t('services.recommendedByOne')}`
-                        : `${t('services.recommendedBy')} ${provider.networkRecommenders.length} ${t('services.recommendedByNetwork')}`
-                      }
+                      {(() => {
+                        const recommenders = provider.networkRecommenders;
+                        if (recommenders.length === 1) {
+                          return `${t('services.recommendedBy')} ${recommenders[0].name} in your network`;
+                        } else if (recommenders.length === 2) {
+                          return `${t('services.recommendedBy')} ${recommenders[0].name} and ${recommenders[1].name} in your network`;
+                        } else if (recommenders.length > 2) {
+                          return `${t('services.recommendedBy')} ${recommenders[0].name}, ${recommenders[1].name} and ${recommenders.length - 2} other${recommenders.length - 2 === 1 ? '' : 's'} in your network`;
+                        }
+                        return '';
+                      })()}
                     </span>
                   </p>
                 </div>

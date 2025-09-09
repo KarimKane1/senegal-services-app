@@ -3,7 +3,7 @@ import { Search, Filter } from 'lucide-react';
 import ServiceProviderCard from './ServiceProviderCard';
 import ServiceProviderDetailModal from './ServiceProviderDetailModal';
 import GuestPromptModal from '../common/GuestPromptModal';
-import { mockServiceProviders } from '../../data/mockData';
+// Removed mock data import - using real data only
 import { useProviders } from '../../../hooks/providers';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../../context/I18nContext';

@@ -8,7 +8,7 @@ interface OnboardingModalProps {
 
 const seekerSteps = [
   {
-    title: "Welcome to Trust Network! 👋",
+    title: "Welcome to Verra! 👋",
     description: "Find trusted service providers through your network.",
     icon: Users,
     content: "Connect with friends to access their trusted recommendations and discover reliable service providers."
@@ -35,7 +35,7 @@ const seekerSteps = [
 
 const providerSteps = [
   {
-    title: "Welcome to Trust Network! 👋",
+    title: "Welcome to Verra! 👋",
     description: "Grow your business through trusted recommendations.",
     icon: Users,
     content: "Get more customers through word-of-mouth recommendations from satisfied clients."

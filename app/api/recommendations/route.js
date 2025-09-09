@@ -111,13 +111,10 @@ export async function POST(req) {
   // Map slug to enum for backward compatibility (database has both columns)
   const slugToEnum = {
     plumber: 'plumber',
-    cleaner: 'cleaner',
-    nanny: 'nanny',
     electrician: 'electrician',
+    hvac: 'hvac',
     carpenter: 'carpenter',
-    hair: 'hair',
-    henna: 'henna',
-    chef: 'chef',
+    handyman: 'handyman',
   };
   
   const service_type = slugToEnum[serviceType];
@@ -495,10 +492,11 @@ export async function PATCH(req) {
     
     // Map slug to enum for backward compatibility
     const slugToEnum = {
-      plumber: 'plumber', cleaner: 'cleaner', nanny: 'nanny', electrician: 'electrician',
-      carpenter: 'carpenter', hair: 'hair', henna: 'henna', chef: 'chef', cook: 'chef',
-      tech_repair: 'electrician', gardener: 'cleaner', driver: 'other', security: 'other',
-      painter: 'other', mechanic: 'other'
+      plumber: 'plumber',
+      electrician: 'electrician',
+      hvac: 'hvac',
+      carpenter: 'carpenter',
+      handyman: 'handyman',
     };
     
     const service_type = slugToEnum[category.slug] || 'other';

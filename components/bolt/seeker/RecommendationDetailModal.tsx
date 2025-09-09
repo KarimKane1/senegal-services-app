@@ -37,21 +37,11 @@ export default function RecommendationDetailModal({ recommendation, onClose, onE
     // If no exact match, try common variations
     if (!translatedName || translatedName === translationKey) {
       const variations: { [key: string]: string } = {
-        'cleaner': 'category.cleaner',
         'plumber': 'category.plumber',
         'electrician': 'category.electrician',
+        'hvac': 'category.hvac',
         'carpenter': 'category.carpenter',
-        'nanny': 'category.nanny',
-        'hair': 'category.hair',
-        'henna': 'category.henna',
-        'chef': 'category.chef',
-        'cook': 'category.cook',
-        'tech_repair': 'category.tech_repair',
-        'gardener': 'category.gardener',
-        'driver': 'category.driver',
-        'security': 'category.security',
-        'painter': 'category.painter',
-        'mechanic': 'category.mechanic'
+        'handyman': 'category.handyman'
       };
       
       const variationKey = variations[normalizedType];
@@ -86,7 +76,7 @@ export default function RecommendationDetailModal({ recommendation, onClose, onE
     return qualityMap[quality] || quality;
   };
   const handleWhatsAppContact = async () => {
-    const message = `Hi ${recommendation.name}, I found you through Trust Network and would like to inquire about your ${recommendation.serviceType.toLowerCase()} services.`;
+    const message = `Hi ${recommendation.name}, I found you through Verra, it's an app for friends to refer ${recommendation.serviceType.toLowerCase()} they like. I would like to inquire about your ${recommendation.serviceType.toLowerCase()} services.`;
     // Prefer a precomputed intent from the API if present
     const preIntent = (recommendation as any).whatsapp_intent as string | undefined;
     if (preIntent) {

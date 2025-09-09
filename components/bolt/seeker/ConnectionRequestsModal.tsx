@@ -145,7 +145,7 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
       <div ref={modalRef} className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 md:p-6">
           <div className="flex items-center justify-between mb-4 md:mb-6">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Connection Requests</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Friend Requests</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -271,7 +271,7 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
 
           {/* Info */}
           <div className="bg-blue-50 rounded-lg p-3 md:p-4 mt-4 md:mt-6">
-            <h4 className="text-sm md:text-base font-semibold text-gray-900 mb-2">About Connection Requests</h4>
+            <h4 className="text-sm md:text-base font-semibold text-gray-900 mb-2">About Friend Requests</h4>
             <ul className="text-xs md:text-sm text-gray-600 space-y-1">
               <li>• Only accept requests from people you know and trust</li>
               <li>• Mutual connections help verify trustworthiness</li>

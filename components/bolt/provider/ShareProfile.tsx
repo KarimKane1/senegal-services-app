@@ -28,7 +28,7 @@ export default function ShareProfile() {
   };
 
   const handleShareWhatsApp = () => {
-    const message = `Hi! I'm John the Plumber. If you've used my services and were satisfied, please add me to your Trust Network recommendations using this link: ${profileUrl}`;
+    const message = `Hi! I'm John the Plumber. If you've used my services and were satisfied, please add me to your Verra recommendations using this link: ${profileUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };

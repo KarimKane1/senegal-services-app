@@ -11,7 +11,7 @@ export default function Header({ userType = 'seeker', user }) {
             <div className="bg-indigo-600 p-1.5 md:p-2 rounded-lg trust-network-logo">
               <Shield className="w-5 md:w-6 h-5 md:h-6 text-white" />
             </div>
-            <h1 className="text-lg md:text-2xl font-bold text-gray-900 ml-2 md:ml-3">Trust Network</h1>
+            <h1 className="text-lg md:text-2xl font-bold text-gray-900 ml-2 md:ml-3">Verra</h1>
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4">
