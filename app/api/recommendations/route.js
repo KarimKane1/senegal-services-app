@@ -25,9 +25,21 @@ function hashPhoneE164(e164) {
 
 function encryptPhone(e164) {
   if (!e164) return null;
-  // Temporarily disable encryption to fix the persistent error
-  // TODO: Re-implement proper encryption later
-  return crypto.createHash('sha256').update(e164).digest('hex');
+  
+  try {
+    const keyHex = process.env.ENCRYPTION_KEY_HEX;
+    if (!keyHex || keyHex.length !== 64) return null;
+    
+    const key = Buffer.from(keyHex, 'hex');
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    const ciphertext = Buffer.concat([cipher.update(e164, 'utf8'), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return Buffer.concat([iv, tag, ciphertext]).toString('hex');
+  } catch (error) {
+    console.error('Encryption error:', error);
+    return null;
+  }
 }
 
 function decryptPhone(encryptedHex) {
