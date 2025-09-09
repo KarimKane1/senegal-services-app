@@ -13,18 +13,18 @@ CREATE TABLE IF NOT EXISTS service_categories (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Insert the existing categories from the enum
+-- 2. Insert the categories that match the frontend
 INSERT INTO service_categories (name, slug, description, sort_order) VALUES
 ('Plumber', 'plumber', 'Plumbing services and repairs', 1),
-('Cleaner', 'cleaner', 'Cleaning and housekeeping services', 2),
-('Nanny', 'nanny', 'Childcare and nanny services', 3),
-('Electrician', 'electrician', 'Electrical services and repairs', 4),
-('Carpenter', 'carpenter', 'Carpentry and woodworking services', 5),
-('Hair', 'hair', 'Hair styling and beauty services', 6),
-('Henna', 'henna', 'Henna and traditional beauty services', 7),
-('Chef', 'chef', 'Cooking and culinary services', 8),
-('Other', 'other', 'Other miscellaneous services', 9)
-ON CONFLICT (slug) DO NOTHING;
+('Electrician', 'electrician', 'Electrical services and repairs', 2),
+('HVAC', 'hvac', 'Heating, ventilation, and air conditioning services', 3),
+('Carpenter', 'carpenter', 'Carpentry and woodworking services', 4),
+('Handyman', 'handyman', 'General handyman and repair services', 5)
+ON CONFLICT (slug) DO UPDATE SET 
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  sort_order = EXCLUDED.sort_order,
+  is_active = true;
 
 -- 3. Add a new column to provider table to reference service_categories
 ALTER TABLE provider ADD COLUMN IF NOT EXISTS service_category_id UUID REFERENCES service_categories(id);
@@ -34,7 +34,11 @@ UPDATE provider SET service_category_id = (
   SELECT id FROM service_categories WHERE slug = provider.service_type::text
 ) WHERE service_category_id IS NULL;
 
--- 5. Make service_category_id NOT NULL after data migration
+-- 5. Update any providers with old service types to use new ones
+UPDATE provider SET service_type = 'handyman' WHERE service_type = 'other';
+UPDATE provider SET service_type = 'hvac' WHERE service_type = 'cleaner';
+
+-- 6. Make service_category_id NOT NULL after data migration
 ALTER TABLE provider ALTER COLUMN service_category_id SET NOT NULL;
 
 -- 6. Add RLS policies for service_categories
