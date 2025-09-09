@@ -88,16 +88,16 @@ export async function GET(req, { params }) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  let phoneE164 = decodePhoneFromBytea(data.phone_enc);
-  console.log('Provider phone decryption debug:', {
+  // Use the same approach as recommendations API - hash lookup only
+  let phoneE164 = '';
+  console.log('Provider phone lookup debug:', {
     providerId: id,
-    hasPhoneEnc: !!data.phone_enc,
     hasPhoneHash: !!data.phone_hash,
-    decodedPhone: phoneE164
+    phoneHash: data.phone_hash
   });
   
-  // Fallback: derive from users.phone_e164 if hash matches
-  if (!phoneE164) {
+  // Look up phone from users table using hash
+  if (data.phone_hash) {
     try {
       const hashPhone = (e164) => {
         const saltHex = process.env.ENCRYPTION_KEY_HEX || '';
@@ -118,27 +118,7 @@ export async function GET(req, { params }) {
       console.error('Hash lookup error:', error);
     }
   }
-  // If we recovered a phone but provider has none, persist it for future
-  if (phoneE164 && !data.phone_enc) {
-    try {
-      const keyHex = process.env.ENCRYPTION_KEY_HEX;
-      let bytes = null;
-      if (keyHex && keyHex.length === 64) {
-        const key = Buffer.from(keyHex, 'hex');
-        const iv = crypto.randomBytes(12);
-        const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-        const ciphertext = Buffer.concat([cipher.update(phoneE164, 'utf8'), cipher.final()]);
-        const tag = cipher.getAuthTag();
-        bytes = Buffer.concat([iv, tag, ciphertext]);
-      } else {
-        bytes = Buffer.from(phoneE164, 'utf8');
-      }
-      if (bytes) {
-        const hex = Buffer.isBuffer(bytes) ? bytes.toString('hex') : Buffer.from(bytes).toString('hex');
-        await supabase.from('provider').update({ phone_enc: `\\x${hex}` }).eq('id', id);
-      }
-    } catch {}
-  }
+  // Phone lookup complete - no need to persist since we're using hash-based lookup
   const allowed = any || data.visibility === 'public';
   const whatsapp_intent = allowed && phoneE164 ? `https://wa.me/${phoneE164.replace('+', '')}` : null;
 
