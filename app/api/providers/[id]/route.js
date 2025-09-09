@@ -86,7 +86,7 @@ export async function GET(req, { params }) {
     
     const { data, error } = await supabase
       .from('provider')
-      .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,phone_e164,visibility,owner_user_id')
+      .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,visibility,owner_user_id')
       .eq('id', id)
       .maybeSingle();
       
@@ -104,14 +104,12 @@ export async function GET(req, { params }) {
     name: data.name,
     hasPhoneEnc: !!data.phone_enc,
     hasPhoneHash: !!data.phone_hash,
-    hasPhoneE164: !!data.phone_e164,
-    phoneE164: data.phone_e164,
     hasOwnerUserId: !!data.owner_user_id,
     ownerUserId: data.owner_user_id
   });
 
-  // Try direct phone_e164 first (simplest approach)
-  let phoneE164 = data.phone_e164 || '';
+  // Start with empty phone - will try to find it
+  let phoneE164 = '';
   
   // If no direct phone, try owner lookup
   if (!phoneE164 && data.owner_user_id) {
