@@ -2,12 +2,12 @@ import React from 'react';
 import { X, Share2, Phone } from 'lucide-react';
 
 export default function InviteFriendModal({ onClose, inviteUrl, message }: { onClose: () => void; inviteUrl: string; message?: string }) {
-  const text = message || `Join me on Verra to find and share trusted service providers: ${inviteUrl}`;
+    const text = message || `Join me on Lumio to find and share trusted service providers: ${inviteUrl}`;
 
   const shareNative = async () => {
     try {
       if ((navigator as any).share) {
-        await (navigator as any).share({ title: 'Verra', text, url: inviteUrl });
+        await (navigator as any).share({ title: 'Lumio', text, url: inviteUrl });
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(text);

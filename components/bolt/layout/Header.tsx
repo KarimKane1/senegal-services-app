@@ -20,7 +20,7 @@ export default function Header({ userType }: HeaderProps) {
               <Shield className="w-5 md:w-6 h-5 md:h-6 text-white" />
             </div>
             <h1 className="text-lg md:text-2xl font-bold text-gray-900 ml-2 md:ml-3">
-              {isHydrated ? t('app.title') : 'Verra'}
+              {isHydrated ? t('app.title') : 'Lumio'}
             </h1>
           </div>
           

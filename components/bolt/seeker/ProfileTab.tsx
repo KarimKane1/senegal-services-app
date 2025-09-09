@@ -35,7 +35,7 @@ export default function ProfileTab() {
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-8 text-white">
           <div>
             <h2 className="text-xl font-bold mb-1">{t('profile.myProfile') || 'My Profile'}</h2>
-            <p className="opacity-90">{t('profile.subtitle') || 'Your Verra profile'}</p>
+            <p className="opacity-90">{t('profile.subtitle') || 'Your Lumio profile'}</p>
           </div>
         </div>
 

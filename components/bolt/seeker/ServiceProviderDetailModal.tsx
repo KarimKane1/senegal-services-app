@@ -66,7 +66,7 @@ export default function ServiceProviderDetailModal({ provider, onClose }: Servic
 
   const handleWhatsAppContact = async () => {
     if (detail.whatsapp_intent) {
-      window.open(`${detail.whatsapp_intent}?text=${encodeURIComponent(`Hi ${provider.name}, I found you through Verra, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`)}`, '_blank');
+      window.open(`${detail.whatsapp_intent}?text=${encodeURIComponent(`Hi ${provider.name}, I found you through Lumio, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`)}`, '_blank');
       return;
     }
     // create contact request when not public

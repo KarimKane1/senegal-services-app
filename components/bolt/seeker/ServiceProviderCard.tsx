@@ -95,7 +95,7 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
       onContact();
       return;
     }
-    const message = `Hi ${provider.name}, I found you through Verra, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
+    const message = `Hi ${provider.name}, I found you through Lumio, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
     
     // Use whatsapp_intent if available, otherwise fetch it
     if (provider.whatsapp_intent) {

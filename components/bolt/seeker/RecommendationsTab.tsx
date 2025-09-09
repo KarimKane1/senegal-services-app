@@ -241,7 +241,7 @@ export default function RecommendationsTab() {
                     if (isGuest) {
                       handleGuestAction();
                     } else {
-                      const text = `Hi ${recommendation.name}, I found you through Verra, it's an app for friends to refer ${String(recommendation.serviceType || '').toLowerCase()} they like. I would like to inquire about your ${String(recommendation.serviceType || '').toLowerCase()} services.`;
+                      const text = `Hi ${recommendation.name}, I found you through Lumio, it's an app for friends to refer ${String(recommendation.serviceType || '').toLowerCase()} they like. I would like to inquire about your ${String(recommendation.serviceType || '').toLowerCase()} services.`;
                       const raw = (recommendation.phone || recommendation.phone_e164 || '');
                       const phone = raw.replace(/\D/g, ''); // WhatsApp expects digits only
                       if (phone) {

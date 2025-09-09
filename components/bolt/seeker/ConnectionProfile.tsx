@@ -123,7 +123,7 @@ export default function ConnectionProfile({ connection, onBack }: ConnectionProf
   }));
 
   const handleWhatsAppContact = async (provider: ServiceProvider) => {
-    const message = `Hi ${provider.name}, I found you through ${connection.name} on Verra, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
+    const message = `Hi ${provider.name}, I found you through ${connection.name} on Lumio, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
     
     // Use whatsapp_intent if available
     if (provider.whatsapp_intent) {

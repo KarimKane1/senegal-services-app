@@ -123,10 +123,10 @@ export default function AuthPage() {
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 ml-2">Verra</h1>
+              <h1 className="text-2xl font-bold text-gray-900 ml-2">Lumio</h1>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{t('auth.createAccount') || 'Create Account'}</h2>
-            <p className="text-gray-700 mb-4">{t('auth.join') || 'Join Verra'}</p>
+            <p className="text-gray-700 mb-4">{t('auth.join') || 'Join Lumio'}</p>
             {/* Language toggle (signup only) */}
             <div className="flex justify-center mb-2">
               <div className="inline-flex rounded-full bg-gray-100 p-1" role="radiogroup" aria-label="Language">
@@ -315,7 +315,7 @@ export default function AuthPage() {
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 ml-2">Verra</h1>
+              <h1 className="text-2xl font-bold text-gray-900 ml-2">Lumio</h1>
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{t('auth.welcomeBack') || 'Welcome Back'}</h2>
             <p className="text-gray-700 mb-4">{t('auth.signInSubtitle') || 'Sign in to your account'}</p>
@@ -502,7 +502,7 @@ export default function AuthPage() {
               <div className="bg-indigo-600 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Users className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-indigo-900 mb-4">{t('landing.trusted') || 'Verra Networks'}</h3>
+              <h3 className="text-2xl font-bold text-indigo-900 mb-4">{t('landing.trusted') || 'Lumio Networks'}</h3>
               <p className="text-indigo-800 text-lg leading-relaxed">{t('landing.trustedText') || 'Build your network of trusted service providers and connections'}</p>
             </div>
             <div className="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-lg border-2 border-green-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -525,7 +525,7 @@ export default function AuthPage() {
           <div className="hidden md:block max-w-lg mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('landing.getStarted') || 'Get Started'}</h2>
-              <p className="text-gray-700">{t('landing.getStartedText') || 'Join Verra to get started'}</p>
+              <p className="text-gray-700">{t('landing.getStartedText') || 'Join Lumio to get started'}</p>
             </div>
 
             <div className="space-y-4">

@@ -21,7 +21,7 @@ interface InteractiveOnboardingProps {
 const seekerSteps: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Hey there! Welcome to Verra! 👋',
+    title: 'Hey there! Welcome to Lumio! 👋',
     description: 'I\'m here to help you find amazing service providers through people you already trust. Think of me as your personal guide - let\'s explore together!',
     targetSelector: '',
     position: 'top',
@@ -60,7 +60,7 @@ const seekerSteps: OnboardingStep[] = [
 const providerSteps: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Hey! Welcome to Verra! 👋',
+    title: 'Hey! Welcome to Lumio! 👋',
     description: 'I\'m excited to help you grow your business through word-of-mouth recommendations. Let me show you how to get more customers through satisfied clients!',
     targetSelector: '',
     position: 'top',

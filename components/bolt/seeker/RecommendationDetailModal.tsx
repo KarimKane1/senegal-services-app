@@ -76,7 +76,7 @@ export default function RecommendationDetailModal({ recommendation, onClose, onE
     return qualityMap[quality] || quality;
   };
   const handleWhatsAppContact = async () => {
-    const message = `Hi ${recommendation.name}, I found you through Verra, it's an app for friends to refer ${recommendation.serviceType.toLowerCase()} they like. I would like to inquire about your ${recommendation.serviceType.toLowerCase()} services.`;
+    const message = `Hi ${recommendation.name}, I found you through Lumio, it's an app for friends to refer ${recommendation.serviceType.toLowerCase()} they like. I would like to inquire about your ${recommendation.serviceType.toLowerCase()} services.`;
     // Prefer a precomputed intent from the API if present
     const preIntent = (recommendation as any).whatsapp_intent as string | undefined;
     if (preIntent) {
