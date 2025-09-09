@@ -109,11 +109,39 @@ export async function GET(req, { params }) {
     ownerUserId: data.owner_user_id
   });
 
-  // Skip phone decryption entirely - get phone from users table
+  // Try multiple approaches to get the phone number
   let phoneE164 = '';
   
-  // Try to get phone from users table using phone_hash
-  if (data.phone_hash) {
+  // First, try to decrypt the phone_enc data directly
+  if (data.phone_enc) {
+    try {
+      console.log('Trying to decrypt phone_enc directly...');
+      const hex = byteaToHex(data.phone_enc);
+      console.log('Phone_enc hex:', hex);
+      
+      // Try AES-GCM decryption
+      const decrypted = decryptPhone(hex);
+      console.log('Decrypted phone (AES-GCM):', decrypted);
+      
+      if (decrypted && /^\+?\d{6,}$/.test(decrypted.replace(/\s/g, ''))) {
+        phoneE164 = decrypted;
+        console.log('Found phone via direct decryption:', phoneE164);
+      } else {
+        // Try plain hex decode
+        const plaintext = Buffer.from(hex, 'hex').toString('utf8');
+        console.log('Decoded as plaintext:', plaintext);
+        if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
+          phoneE164 = plaintext;
+          console.log('Found phone via plaintext decode:', phoneE164);
+        }
+      }
+    } catch (error) {
+      console.error('Direct decryption error:', error);
+    }
+  }
+  
+  // If direct decryption failed, try hash lookup
+  if (!phoneE164 && data.phone_hash) {
     try {
       console.log('Looking for phone with hash:', data.phone_hash);
       const { data: userData } = await supabase
@@ -134,7 +162,10 @@ export async function GET(req, { params }) {
         for (const user of userData) {
           if (user.phone_e164) {
             const hash = makeHash(user.phone_e164);
-            console.log('Comparing hash:', hash, 'with provider hash:', data.phone_hash);
+            console.log('User phone:', user.phone_e164);
+            console.log('Generated hash:', hash);
+            console.log('Provider hash:', data.phone_hash);
+            console.log('Hashes match:', hash === data.phone_hash);
             if (hash === data.phone_hash) {
               phoneE164 = user.phone_e164;
               console.log('Found phone via hash lookup:', phoneE164);
@@ -144,13 +175,8 @@ export async function GET(req, { params }) {
         }
         
         if (!phoneE164) {
-          console.log('No matching hash found, using first available phone...');
-          // If hash doesn't work, just return the first phone number we find
-          const firstPhone = userData.find(u => u.phone_e164)?.phone_e164;
-          if (firstPhone) {
-            phoneE164 = firstPhone;
-            console.log('Using first available phone:', phoneE164);
-          }
+          console.log('No matching hash found - this provider has no valid phone number');
+          // Don't use a random phone number - this would be wrong
         }
       }
     } catch (error) {
@@ -176,42 +202,9 @@ export async function GET(req, { params }) {
     }
   }
   
-  // Final fallback - if still no phone, use any available phone
+  // No fallback - if we can't find the provider's phone, return null
   if (!phoneE164) {
-    try {
-      console.log('Final fallback - getting any available phone...');
-      const { data: anyUser } = await supabase
-        .from('users')
-        .select('phone_e164')
-        .not('phone_e164', 'is', null)
-        .limit(1)
-        .single();
-      
-      if (anyUser?.phone_e164) {
-        phoneE164 = anyUser.phone_e164;
-        console.log('Using fallback phone:', phoneE164);
-      }
-    } catch (error) {
-      console.error('Fallback phone lookup error:', error);
-    }
-  }
-  
-  // If still no phone, try to get from owner_user_id
-  if (!phoneE164 && data.owner_user_id) {
-    try {
-      const { data: ownerData } = await supabase
-        .from('users')
-        .select('phone_e164')
-        .eq('id', data.owner_user_id)
-        .single();
-      
-      if (ownerData?.phone_e164) {
-        phoneE164 = ownerData.phone_e164;
-        console.log('Found phone via owner lookup:', phoneE164);
-      }
-    } catch (error) {
-      console.error('Owner lookup error:', error);
-    }
+    console.log('No valid phone number found for this provider');
   }
   // Phone lookup complete - no need to persist since we're using hash-based lookup
   const allowed = any || data.visibility === 'public';

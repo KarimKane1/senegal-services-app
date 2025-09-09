@@ -330,38 +330,9 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // If no recommendations found with user filter, try without filter
+    // If no recommendations found, that's fine - user just hasn't made any yet
     if ((!data || data.length === 0) && userId) {
-      console.log('No recommendations found for user, trying without filter...');
-      const { data: allData } = await supabase
-        .from('recommendation')
-        .select('id,provider_id,note,created_at,recommender_user_id')
-        .order('created_at', { ascending: false });
-      
-      if (allData && allData.length > 0) {
-        console.log('Found recommendations without filter:', allData.length);
-        data = allData; // Use all recommendations if user-specific query returned nothing
-      }
-    }
-    
-    // If still no data, check if the user ID exists in the users table
-    if ((!data || data.length === 0) && userId) {
-      console.log('Checking if user exists in users table...');
-      const { data: userExists } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', userId)
-        .single();
-      
-      console.log('User exists in users table:', !!userExists);
-      if (!userExists) {
-        console.log('User not found in users table, returning all recommendations');
-        const { data: allRecs } = await supabase
-          .from('recommendation')
-          .select('id,provider_id,note,created_at,recommender_user_id')
-          .order('created_at', { ascending: false });
-        data = allRecs || [];
-      }
+      console.log('No recommendations found for user - this is normal if they haven\'t made any yet');
     }
 
     // Get provider details for each recommendation
