@@ -97,7 +97,7 @@ export async function GET(req) {
     // Return current user's connections
     const { data, error } = await supabase
       .from('connection')
-      .select('user_a_id,user_b_id,created_at')
+      .select('user_a_id,user_b_id')
       .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
     
     console.log('Connection query result:', { data: data?.length, error });
