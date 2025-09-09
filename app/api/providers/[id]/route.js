@@ -113,10 +113,17 @@ export async function GET(req, { params }) {
   
   if (data.phone_enc) {
     try {
-      const decrypted = decodePhoneFromBytea(data.phone_enc);
-      if (decrypted) {
-        phoneE164 = decrypted;
-        console.log('Found phone via decodePhoneFromBytea:', phoneE164);
+      // Convert bytea to hex string first
+      const hex = byteaToHex(data.phone_enc);
+      console.log('Phone_enc hex:', hex);
+      
+      if (hex) {
+        const decrypted = decryptPhone(hex);
+        console.log('Decrypted phone:', decrypted);
+        if (decrypted) {
+          phoneE164 = decrypted;
+          console.log('Found phone:', phoneE164);
+        }
       }
     } catch (error) {
       console.error('Phone decryption error:', error);

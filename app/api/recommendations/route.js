@@ -281,6 +281,9 @@ export async function GET(req) {
     
     if (userId) {
       query = query.eq('recommender_user_id', userId);
+      console.log('Filtering by userId:', userId);
+    } else {
+      console.log('No userId provided, getting all recommendations');
     }
     
     const { data, error } = await query;
