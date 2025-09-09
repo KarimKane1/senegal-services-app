@@ -97,8 +97,8 @@ export async function GET(req) {
     // Return current user's connections
     const { data, error } = await supabase
       .from('connection')
-      .select('user_a_id,user_b_id')
-      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+      .select('user1_id,user2_id')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
     
     console.log('Connection query result:', { data: data?.length, error });
     if (error) {
@@ -106,7 +106,7 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message, details: error }, { status: 500 });
     }
     const otherIds = new Set(
-      (data || []).map((r) => (r.user_a_id === userId ? r.user_b_id : r.user_a_id))
+      (data || []).map((r) => (r.user1_id === userId ? r.user2_id : r.user1_id))
     );
     const { data: users, error: usersErr } = await supabase
       .from('users')
@@ -274,9 +274,9 @@ export async function PATCH(req) {
       // First, check if connection already exists
       const { data: existingConnection, error: checkError } = await supabase
         .from('connection')
-        .select('user_a_id, user_b_id')
-        .eq('user_a_id', a)
-        .eq('user_b_id', b)
+        .select('user1_id, user2_id')
+        .eq('user1_id', a)
+        .eq('user2_id', b)
         .maybeSingle();
       
       if (checkError) {
@@ -322,12 +322,12 @@ export async function PATCH(req) {
       }
       
       // Create connection row
-      console.log('Creating connection:', { user_a_id: a, user_b_id: b });
+      console.log('Creating connection:', { user1_id: a, user2_id: b });
       
       const { data: connectionData, error: connectionError } = await supabase
         .from('connection')
-        .insert({ user_a_id: a, user_b_id: b })
-        .select('user_a_id, user_b_id')
+        .insert({ user1_id: a, user2_id: b })
+        .select('user1_id, user2_id')
         .single();
       
       console.log('Create connection result:', { connectionData, connectionError });
