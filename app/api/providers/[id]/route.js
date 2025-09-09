@@ -108,37 +108,22 @@ export async function GET(req, { params }) {
     ownerUserId: data.owner_user_id
   });
 
-  // Start with empty phone - will try to find it
+  // Simple approach - just use the phone_enc directly
   let phoneE164 = '';
   
-  // Try to decrypt phone_enc first (this used to work)
-  if (!phoneE164 && data.phone_enc) {
+  if (data.phone_enc) {
     try {
-      const decrypted = decodePhoneFromBytea(data.phone_enc);
-      if (decrypted) {
-        phoneE164 = decrypted;
-        console.log('Found phone via decodePhoneFromBytea:', phoneE164);
+      // Convert bytea to hex and then decrypt
+      const hex = byteaToHex(data.phone_enc);
+      if (hex) {
+        const decrypted = decryptPhone(hex);
+        if (decrypted) {
+          phoneE164 = decrypted;
+          console.log('Found phone:', phoneE164);
+        }
       }
     } catch (error) {
       console.error('Phone decryption error:', error);
-    }
-  }
-  
-  // If no decrypted phone, try owner lookup
-  if (!phoneE164 && data.owner_user_id) {
-    try {
-      const { data: owner } = await supabase
-        .from('users')
-        .select('phone_e164')
-        .eq('id', data.owner_user_id)
-        .maybeSingle();
-      
-      if (owner?.phone_e164) {
-        phoneE164 = owner.phone_e164;
-        console.log('Found phone via owner lookup:', phoneE164);
-      }
-    } catch (error) {
-      console.error('Owner lookup error:', error);
     }
   }
   // Phone lookup complete - no need to persist since we're using hash-based lookup
