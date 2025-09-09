@@ -82,11 +82,21 @@ export async function GET(req, { params }) {
   const any = searchParams.get('any') === '1';
   const { data, error } = await supabase
     .from('provider')
-    .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,visibility')
+    .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,visibility,owner_user_id')
     .eq('id', id)
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  console.log('Provider data from database:', {
+    id: data.id,
+    name: data.name,
+    hasPhoneEnc: !!data.phone_enc,
+    hasPhoneHash: !!data.phone_hash,
+    phoneHash: data.phone_hash,
+    hasOwnerUserId: !!data.owner_user_id,
+    ownerUserId: data.owner_user_id
+  });
 
   // Use the same approach as recommendations API - hash lookup only
   let phoneE164 = '';
@@ -106,16 +116,39 @@ export async function GET(req, { params }) {
         return crypto.createHash('sha256').update(Buffer.concat([prefix, Buffer.from(e164)])).digest('hex');
       };
       const { data: users } = await supabase.from('users').select('phone_e164').not('phone_e164','is',null);
+      console.log('Checking', users?.length || 0, 'users for hash match');
       for (const u of users || []) {
         const e164 = u.phone_e164;
-        if (e164 && hashPhone(e164) === data.phone_hash) { 
-          phoneE164 = e164; 
-          console.log('Found phone via hash lookup:', e164);
-          break; 
+        if (e164) {
+          const computedHash = hashPhone(e164);
+          console.log('User phone:', e164, 'Computed hash:', computedHash, 'Matches:', computedHash === data.phone_hash);
+          if (computedHash === data.phone_hash) { 
+            phoneE164 = e164; 
+            console.log('Found phone via hash lookup:', e164);
+            break; 
+          }
         }
       }
     } catch (error) {
       console.error('Hash lookup error:', error);
+    }
+  }
+
+  // Fallback: if no phone found via hash, try to get it from the owner's user record
+  if (!phoneE164 && data.owner_user_id) {
+    try {
+      const { data: owner } = await supabase
+        .from('users')
+        .select('phone_e164')
+        .eq('id', data.owner_user_id)
+        .maybeSingle();
+      
+      if (owner?.phone_e164) {
+        phoneE164 = owner.phone_e164;
+        console.log('Found phone via owner lookup:', phoneE164);
+      }
+    } catch (error) {
+      console.error('Owner lookup error:', error);
     }
   }
   // Phone lookup complete - no need to persist since we're using hash-based lookup
