@@ -76,17 +76,28 @@ function normalizePhone(input) {
 }
 
 export async function GET(req, { params }) {
-  const id = params.id;
-  const supabase = supabaseServer();
-  const { searchParams } = new URL(req.url);
-  const any = searchParams.get('any') === '1';
-  const { data, error } = await supabase
-    .from('provider')
-    .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,phone_e164,visibility,owner_user_id')
-    .eq('id', id)
-    .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  try {
+    const id = params.id;
+    const supabase = supabaseServer();
+    const { searchParams } = new URL(req.url);
+    const any = searchParams.get('any') === '1';
+    
+    console.log('Provider API called with ID:', id, 'any:', any);
+    
+    const { data, error } = await supabase
+      .from('provider')
+      .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,phone_e164,visibility,owner_user_id')
+      .eq('id', id)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    if (!data) {
+      console.log('Provider not found for ID:', id);
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
   console.log('Provider data from database:', {
     id: data.id,
@@ -149,19 +160,23 @@ export async function GET(req, { params }) {
     aliases = Array.from(new Set(((aliasRows || []).map(r => r.alias || '')))).filter(Boolean);
   } catch {}
 
-  return NextResponse.json({
-    id: data.id,
-    name: data.name,
-    service_type: data.service_type,
-    city: data.city,
-    cities,
-    aliases,
-    photo_url: data.photo_url,
-    visibility: data.visibility,
-    masked_tail: phoneE164 ? maskTail(phoneE164) : null,
-    whatsapp_intent,
-    attributes,
-  });
+    return NextResponse.json({
+      id: data.id,
+      name: data.name,
+      service_type: data.service_type,
+      city: data.city,
+      cities,
+      aliases,
+      photo_url: data.photo_url,
+      visibility: data.visibility,
+      masked_tail: phoneE164 ? maskTail(phoneE164) : null,
+      whatsapp_intent,
+      attributes,
+    });
+  } catch (error) {
+    console.error('Provider API error:', error);
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
 }
 
 
