@@ -109,64 +109,11 @@ export async function GET(req, { params }) {
     ownerUserId: data.owner_user_id
   });
 
-  // Get phone number - try multiple decryption methods
+  // Skip phone decryption entirely - get phone from users table
   let phoneE164 = '';
   
-  if (data.phone_enc) {
-    try {
-      // Convert bytea to hex string first
-      const hex = byteaToHex(data.phone_enc);
-      console.log('Phone_enc hex:', hex);
-      
-      if (hex) {
-        // Try AES-GCM decryption first
-        try {
-          const decrypted = decryptPhone(hex);
-          console.log('Decrypted phone (AES-GCM):', decrypted);
-          if (decrypted && /^\+?\d{6,}$/.test(decrypted.replace(/\s/g, ''))) {
-            phoneE164 = decrypted;
-            console.log('Found phone (AES-GCM):', phoneE164);
-          }
-        } catch (aesError) {
-          console.log('AES-GCM failed, trying other methods:', aesError.message);
-        }
-        
-        // If AES-GCM failed, try simple hex decode
-        if (!phoneE164) {
-          try {
-            const plaintext = Buffer.from(hex, 'hex').toString('utf8');
-            console.log('Decoded phone from hex:', plaintext);
-            if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
-              phoneE164 = plaintext;
-              console.log('Found phone (hex):', phoneE164);
-            }
-          } catch (hexError) {
-            console.log('Hex decode failed:', hexError.message);
-          }
-        }
-        
-        // If both failed, try base64 decode
-        if (!phoneE164) {
-          try {
-            const base64Decoded = Buffer.from(hex, 'hex').toString('base64');
-            const phone = Buffer.from(base64Decoded, 'base64').toString('utf8');
-            console.log('Decoded phone from base64:', phone);
-            if (phone && /^\+?\d{6,}$/.test(phone.replace(/\s/g, ''))) {
-              phoneE164 = phone;
-              console.log('Found phone (base64):', phoneE164);
-            }
-          } catch (base64Error) {
-            console.log('Base64 decode failed:', base64Error.message);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Phone decode error:', error);
-    }
-  }
-  
-  // If still no phone, try hash-based lookup from users table
-  if (!phoneE164 && data.phone_hash) {
+  // Try to get phone from users table using phone_hash
+  if (data.phone_hash) {
     try {
       const { data: userData } = await supabase
         .from('users')
@@ -194,6 +141,24 @@ export async function GET(req, { params }) {
       }
     } catch (error) {
       console.error('Hash lookup error:', error);
+    }
+  }
+  
+  // If still no phone, try to get from owner_user_id
+  if (!phoneE164 && data.owner_user_id) {
+    try {
+      const { data: ownerData } = await supabase
+        .from('users')
+        .select('phone_e164')
+        .eq('id', data.owner_user_id)
+        .single();
+      
+      if (ownerData?.phone_e164) {
+        phoneE164 = ownerData.phone_e164;
+        console.log('Found phone via owner lookup:', phoneE164);
+      }
+    } catch (error) {
+      console.error('Owner lookup error:', error);
     }
   }
   // Phone lookup complete - no need to persist since we're using hash-based lookup

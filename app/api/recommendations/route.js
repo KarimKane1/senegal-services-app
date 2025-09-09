@@ -301,6 +301,13 @@ export async function GET(req) {
       console.log('No userId provided, getting all recommendations');
     }
     
+    // Also try without filtering to see if there are any recommendations at all
+    const { data: allRecsTest } = await supabase
+      .from('recommendation')
+      .select('id,provider_id,note,created_at,recommender_user_id')
+      .limit(5);
+    console.log('Quick test - first 5 recommendations:', allRecsTest);
+    
     const { data, error } = await query;
     console.log('Recommendations query result:', { data: data?.length, error, userId });
     console.log('Raw recommendations data:', data);
