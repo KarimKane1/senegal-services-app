@@ -97,12 +97,7 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
     }
     const message = `Hi ${provider.name}, I found you through Lumio, it's an app for friends to refer ${provider.serviceType.toLowerCase()} they like. I would like to inquire about your ${provider.serviceType.toLowerCase()} services.`;
     
-    // Use whatsapp_intent if available, otherwise fetch it
-    if (provider.whatsapp_intent) {
-      window.open(`${provider.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
-      return;
-    }
-    
+    // Always fetch provider details to get whatsapp_intent
     try {
       const res = await fetch(`/api/providers/${provider.id}?any=1`);
       const info = await res.json();
@@ -110,7 +105,9 @@ export default function ServiceProviderCard({ provider, onViewDetails, onContact
         window.open(`${info.whatsapp_intent}?text=${encodeURIComponent(message)}`, '_blank');
         return;
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error fetching provider details:', error);
+    }
     alert('No phone number on file for this provider');
   };
 

@@ -89,6 +89,13 @@ export async function GET(req, { params }) {
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   let phoneE164 = decodePhoneFromBytea(data.phone_enc);
+  console.log('Provider phone decryption debug:', {
+    providerId: id,
+    hasPhoneEnc: !!data.phone_enc,
+    hasPhoneHash: !!data.phone_hash,
+    decodedPhone: phoneE164
+  });
+  
   // Fallback: derive from users.phone_e164 if hash matches
   if (!phoneE164) {
     try {
@@ -101,9 +108,15 @@ export async function GET(req, { params }) {
       const { data: users } = await supabase.from('users').select('phone_e164').not('phone_e164','is',null);
       for (const u of users || []) {
         const e164 = u.phone_e164;
-        if (e164 && hashPhone(e164) === data.phone_hash) { phoneE164 = e164; break; }
+        if (e164 && hashPhone(e164) === data.phone_hash) { 
+          phoneE164 = e164; 
+          console.log('Found phone via hash lookup:', e164);
+          break; 
+        }
       }
-    } catch {}
+    } catch (error) {
+      console.error('Hash lookup error:', error);
+    }
   }
   // If we recovered a phone but provider has none, persist it for future
   if (phoneE164 && !data.phone_enc) {
