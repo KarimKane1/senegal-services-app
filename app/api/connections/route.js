@@ -268,7 +268,40 @@ export async function PATCH(req) {
     if (action === 'approve') {
       console.log('Approving connection request:', { requester_user_id, recipient_user_id });
       
-      // Mark request approved and create connection row
+      // Ensure single canonical order user_a_id < user_b_id to satisfy unique constraint
+      const [a, b] = [requester_user_id, recipient_user_id].sort();
+      
+      // First, check if connection already exists
+      const { data: existingConnection, error: checkError } = await supabase
+        .from('connection')
+        .select('user_a_id, user_b_id')
+        .eq('user_a_id', a)
+        .eq('user_b_id', b)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking existing connection:', checkError);
+        throw checkError;
+      }
+      
+      if (existingConnection) {
+        console.log('Connection already exists, just updating request status');
+        // Connection already exists, just update the request status
+        const { data: updateData, error: updateError } = await supabase
+          .from('connection_request')
+          .update({ status: 'approved', responded_at: new Date().toISOString() })
+          .eq('requester_user_id', requester_user_id)
+          .eq('recipient_user_id', recipient_user_id)
+          .eq('status', 'pending')
+          .select();
+        
+        console.log('Update connection_request result:', { updateData, updateError });
+        if (updateError) throw updateError;
+        
+        return NextResponse.json({ ok: true, connectionId: `${a}-${b}`, alreadyExists: true });
+      }
+      
+      // Mark request approved
       const { data: updateData, error: updateError } = await supabase
         .from('connection_request')
         .update({ status: 'approved', responded_at: new Date().toISOString() })
@@ -278,10 +311,17 @@ export async function PATCH(req) {
         .select();
       
       console.log('Update connection_request result:', { updateData, updateError });
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Failed to update connection_request:', updateError);
+        throw updateError;
+      }
       
-      // Ensure single canonical order user_a_id < user_b_id to satisfy unique constraint
-      const [a, b] = [requester_user_id, recipient_user_id].sort();
+      if (!updateData || updateData.length === 0) {
+        console.error('No connection request found to approve');
+        return NextResponse.json({ error: 'No pending connection request found' }, { status: 404 });
+      }
+      
+      // Create connection row
       console.log('Creating connection:', { user_a_id: a, user_b_id: b });
       
       const { data: connectionData, error: connectionError } = await supabase
@@ -291,7 +331,10 @@ export async function PATCH(req) {
         .single();
       
       console.log('Create connection result:', { connectionData, connectionError });
-      if (connectionError) throw connectionError;
+      if (connectionError) {
+        console.error('Failed to create connection:', connectionError);
+        throw connectionError;
+      }
       
       return NextResponse.json({ ok: true, connectionId: `${a}-${b}` });
     }
@@ -320,7 +363,8 @@ export async function PATCH(req) {
     }
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (e) {
-    return NextResponse.json({ error: String(e.message || e) }, { status: 500 });
+    console.error('PATCH /api/connections error:', e);
+    return NextResponse.json({ error: String(e.message || e), details: e }, { status: 500 });
   }
 }
 

@@ -48,7 +48,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
   }, [onClose]);
   const filteredPeople = people.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    person.location.toLowerCase().includes(searchTerm.toLowerCase())
+    person.phone.includes(searchTerm)
   );
 
   const handleSendRequest = async (personId: string) => {
@@ -85,7 +85,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by name or location..."
+              placeholder="Search by name or phone number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 md:pl-12 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base"
