@@ -5,12 +5,20 @@ import { supabaseBrowser } from '../lib/supabase/client';
 export function useRecommendations(userId?: string) {
   const qp = new URLSearchParams();
   if (userId) qp.set('userId', userId);
+  
+  console.log('useRecommendations called with userId:', userId);
+  console.log('Query params:', qp.toString());
+  
   return useQuery({
     queryKey: ['recommendations', userId || 'me'],
     queryFn: async () => {
-      const res = await fetch(`/api/recommendations?${qp.toString()}`);
+      const url = `/api/recommendations?${qp.toString()}`;
+      console.log('Fetching recommendations from:', url);
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load recommendations');
-      return res.json();
+      const data = await res.json();
+      console.log('Recommendations response:', data);
+      return data;
     },
     enabled: !!userId,
   });

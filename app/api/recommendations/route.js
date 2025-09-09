@@ -312,6 +312,12 @@ export async function GET(req) {
       .order('created_at', { ascending: false });
     console.log('All recommendations in database:', allRecs);
     
+    // Check if any recommendations match the userId
+    if (userId && allRecs) {
+      const matchingRecs = allRecs.filter(rec => rec.recommender_user_id === userId);
+      console.log('Recommendations matching userId:', matchingRecs);
+    }
+    
     if (error) {
       console.error('Recommendations query error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
