@@ -2,10 +2,12 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectionRequests } from '../../../hooks/connections';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function RequestsBanner() {
   const { user } = useAuth();
   const { data } = useConnectionRequests(user?.id);
+  const qc = useQueryClient();
   const pending = ((data as any)?.items?.length as number) || 0;
   const latest = pending > 0 ? ((data as any)!.items as any[])[0] : null;
   const [visible, setVisible] = React.useState(true);
@@ -38,11 +40,22 @@ export default function RequestsBanner() {
             <>
               <button
                 onClick={async () => {
-                  await fetch('/api/connections', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ requester_user_id: latest.id, recipient_user_id: user?.id, action: 'approve' }),
-                  });
+                  try {
+                    const response = await fetch('/api/connections', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ requester_user_id: latest.id, recipient_user_id: user?.id, action: 'approve' }),
+                    });
+                    
+                    if (response.ok) {
+                      // Invalidate queries to refresh data
+                      qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
+                      qc.invalidateQueries({ queryKey: ['connections', user?.id || 'me'] });
+                      qc.invalidateQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] });
+                    }
+                  } catch (error) {
+                    console.error('Error accepting request:', error);
+                  }
                   setVisible(false);
                 }}
                 className="px-2 md:px-3 py-1 rounded-md bg-green-600 text-white text-xs md:text-sm hover:bg-green-700"
@@ -51,11 +64,20 @@ export default function RequestsBanner() {
               </button>
               <button
                 onClick={async () => {
-                  await fetch('/api/connections', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ requester_user_id: latest.id, recipient_user_id: user?.id, action: 'deny' }),
-                  });
+                  try {
+                    const response = await fetch('/api/connections', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ requester_user_id: latest.id, recipient_user_id: user?.id, action: 'deny' }),
+                    });
+                    
+                    if (response.ok) {
+                      // Invalidate queries to refresh data
+                      qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
+                    }
+                  } catch (error) {
+                    console.error('Error declining request:', error);
+                  }
                   setVisible(false);
                 }}
                 className="px-2 md:px-3 py-1 rounded-md bg-gray-200 text-gray-800 text-xs md:text-sm hover:bg-gray-300"

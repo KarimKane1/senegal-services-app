@@ -68,21 +68,13 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
         return;
       }
       
-      const acceptedRequest = receivedRequests.find(req => req.id === requesterId);
-      if (acceptedRequest) {
-        addConnection({
-          id: acceptedRequest.id,
-          name: acceptedRequest.name,
-          location: acceptedRequest.location,
-          avatar: acceptedRequest.avatar,
-          recommendationCount: acceptedRequest.recommendationCount || 0,
-          recommendations: [],
-        });
-      }
+      const result = await response.json();
+      console.log('Connection accepted:', result);
       
-      // Invalidate all related queries to refresh data
+      // Invalidate all related queries to refresh data from API
       qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
       qc.invalidateQueries({ queryKey: ['connections', user?.id || 'me'] });
+      qc.invalidateQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] });
     } catch (error) {
       console.error('Error accepting request:', error);
     }
