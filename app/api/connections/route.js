@@ -188,9 +188,9 @@ export async function GET(req) {
     // Neighbors of current user for mutual counts
     const { data: meConns } = await supabase
       .from('connection')
-      .select('user_a_id,user_b_id')
-      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
-    const myNeighbors = new Set((meConns || []).map(r => (r.user_a_id === userId ? r.user_b_id : r.user_a_id)));
+      .select('user1_id,user2_id')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+    const myNeighbors = new Set((meConns || []).map(r => (r.user1_id === userId ? r.user2_id : r.user1_id)));
 
     // Exclude users already connected with current user
     baseItems = baseItems.filter(u => !myNeighbors.has(u.id));
@@ -207,9 +207,9 @@ export async function GET(req) {
       // Mutual connections between current user and u
       const { data: uConns } = await supabase
         .from('connection')
-        .select('user_a_id,user_b_id')
-        .or(`user_a_id.eq.${u.id},user_b_id.eq.${u.id}`);
-      const uNeighbors = new Set((uConns || []).map(r => (r.user_a_id === u.id ? r.user_b_id : r.user_a_id)));
+        .select('user1_id,user2_id')
+        .or(`user1_id.eq.${u.id},user2_id.eq.${u.id}`);
+      const uNeighbors = new Set((uConns || []).map(r => (r.user1_id === u.id ? r.user2_id : r.user1_id)));
       let mutual = 0;
       for (const nid of myNeighbors) {
         if (uNeighbors.has(nid)) mutual++;
