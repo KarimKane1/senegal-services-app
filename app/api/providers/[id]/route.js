@@ -109,7 +109,8 @@ export async function GET(req, { params }) {
   // Look up phone from users table using hash
   if (data.phone_hash) {
     try {
-      const hashPhone = (e164) => {
+      // Use the exact same hash function as recommendations API
+      const hashPhoneE164 = (e164) => {
         const saltHex = process.env.ENCRYPTION_KEY_HEX || '';
         const salt = Buffer.from(saltHex, 'hex');
         const prefix = salt.length ? salt : Buffer.from('jokko-default-salt');
@@ -120,7 +121,7 @@ export async function GET(req, { params }) {
       for (const u of users || []) {
         const e164 = u.phone_e164;
         if (e164) {
-          const computedHash = hashPhone(e164);
+          const computedHash = hashPhoneE164(e164);
           console.log('User phone:', e164, 'Computed hash:', computedHash, 'Matches:', computedHash === data.phone_hash);
           if (computedHash === data.phone_hash) { 
             phoneE164 = e164; 
