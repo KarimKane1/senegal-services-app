@@ -48,10 +48,12 @@ export default function RequestsBanner() {
                     });
                     
                     if (response.ok) {
-                      // Invalidate queries to refresh data
-                      qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
-                      qc.invalidateQueries({ queryKey: ['connections', user?.id || 'me'] });
-                      qc.invalidateQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] });
+                      // Force refetch all related queries
+                      await Promise.all([
+                        qc.refetchQueries({ queryKey: ['connection-requests', user?.id || 'me'] }),
+                        qc.refetchQueries({ queryKey: ['connections', user?.id || 'me'] }),
+                        qc.refetchQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] })
+                      ]);
                     }
                   } catch (error) {
                     console.error('Error accepting request:', error);
@@ -72,8 +74,8 @@ export default function RequestsBanner() {
                     });
                     
                     if (response.ok) {
-                      // Invalidate queries to refresh data
-                      qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
+                      // Force refetch connection requests
+                      await qc.refetchQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
                     }
                   } catch (error) {
                     console.error('Error declining request:', error);

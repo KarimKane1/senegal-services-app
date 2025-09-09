@@ -57,6 +57,7 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
 
   const handleAcceptRequest = async (requesterId: string) => {
     try {
+      console.log('Accepting connection request for:', requesterId);
       const response = await fetch('/api/connections', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -64,17 +65,22 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
       });
       
       if (!response.ok) {
-        console.error('Failed to accept request:', await response.text());
+        const errorText = await response.text();
+        console.error('Failed to accept request:', errorText);
         return;
       }
       
       const result = await response.json();
       console.log('Connection accepted:', result);
       
-      // Invalidate all related queries to refresh data from API
-      qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
-      qc.invalidateQueries({ queryKey: ['connections', user?.id || 'me'] });
-      qc.invalidateQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] });
+      // Force refetch all related queries
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ['connection-requests', user?.id || 'me'] }),
+        qc.refetchQueries({ queryKey: ['connections', user?.id || 'me'] }),
+        qc.refetchQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] })
+      ]);
+      
+      console.log('Queries refetched');
     } catch (error) {
       console.error('Error accepting request:', error);
     }
@@ -82,6 +88,7 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
 
   const handleDeclineRequest = async (requesterId: string) => {
     try {
+      console.log('Declining connection request for:', requesterId);
       const response = await fetch('/api/connections', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -89,12 +96,18 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
       });
       
       if (!response.ok) {
-        console.error('Failed to decline request:', await response.text());
+        const errorText = await response.text();
+        console.error('Failed to decline request:', errorText);
         return;
       }
       
-      // Invalidate all related queries to refresh data
-      qc.invalidateQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
+      const result = await response.json();
+      console.log('Connection declined:', result);
+      
+      // Force refetch connection requests
+      await qc.refetchQueries({ queryKey: ['connection-requests', user?.id || 'me'] });
+      
+      console.log('Connection requests refetched');
     } catch (error) {
       console.error('Error declining request:', error);
     }
