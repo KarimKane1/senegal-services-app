@@ -32,9 +32,24 @@ function encryptPhone(e164) {
 
 function decryptPhone(encryptedHex) {
   if (!encryptedHex) return '';
-  // Since we're using simple hashing now, we can't decrypt
-  // Return empty string as we don't need to display phone numbers
-  return '';
+  
+  try {
+    const keyHex = process.env.ENCRYPTION_KEY_HEX;
+    if (!keyHex || keyHex.length !== 64) return '';
+    
+    const buf = Buffer.from(encryptedHex, 'hex');
+    const iv = buf.subarray(0, 12);
+    const tag = buf.subarray(12, 28);
+    const ciphertext = buf.subarray(28);
+    const key = Buffer.from(keyHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    return plaintext.toString('utf8');
+  } catch (error) {
+    console.error('Decrypt phone error in recommendations:', error);
+    return '';
+  }
 }
 
 export async function POST(req) {
@@ -373,12 +388,29 @@ export async function GET(req) {
 
       if (provider.phone_enc) {
         try {
-          const decrypted = decryptPhone(provider.phone_enc);
-          if (decrypted) {
+          // Convert bytea to hex first
+          let hex = provider.phone_enc;
+          if (typeof hex === 'string' && hex.startsWith('\\x')) {
+            hex = hex.slice(2);
+          }
+          
+          const decrypted = decryptPhone(hex);
+          if (decrypted && /^\+?\d{6,}$/.test(decrypted.replace(/\s/g, ''))) {
             phone = decrypted;
             e164 = normalizePhone(decrypted);
+          } else {
+            // Try plaintext decode as fallback
+            try {
+              const plaintext = Buffer.from(hex, 'hex').toString('utf8');
+              if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
+                phone = plaintext;
+                e164 = normalizePhone(plaintext);
+              }
+            } catch {}
           }
-        } catch {}
+        } catch (error) {
+          console.error('Phone decryption error in recommendations:', error);
+        }
       }
 
       // Fallback to hash lookup
@@ -438,7 +470,7 @@ export async function GET(req) {
       };
     });
 
-    console.log('Returning recommendations:', { count: items.length });
+    console.log('Returning recommendations:', { count: items.length, items: items.slice(0, 2) });
     return NextResponse.json({ items });
     
   } catch (error) {

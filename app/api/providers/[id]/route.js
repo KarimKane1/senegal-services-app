@@ -15,7 +15,8 @@ function decryptPhone(hex) {
     decipher.setAuthTag(tag);
     const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
     return plaintext.toString('utf8');
-  } catch {
+  } catch (error) {
+    console.error('Decrypt phone error:', error);
     return null;
   }
 }
@@ -108,7 +109,7 @@ export async function GET(req, { params }) {
     ownerUserId: data.owner_user_id
   });
 
-  // Simple approach - just use the phone_enc directly
+  // Try to get phone number from encrypted data
   let phoneE164 = '';
   
   if (data.phone_enc) {
@@ -118,15 +119,61 @@ export async function GET(req, { params }) {
       console.log('Phone_enc hex:', hex);
       
       if (hex) {
+        // Try AES-GCM decryption first
         const decrypted = decryptPhone(hex);
-        console.log('Decrypted phone:', decrypted);
-        if (decrypted) {
+        console.log('Decrypted phone (AES-GCM):', decrypted);
+        
+        if (decrypted && /^\+?\d{6,}$/.test(decrypted.replace(/\s/g, ''))) {
           phoneE164 = decrypted;
-          console.log('Found phone:', phoneE164);
+          console.log('Found phone (AES-GCM):', phoneE164);
+        } else {
+          // Fallback: try to decode as plaintext hex
+          try {
+            const plaintext = Buffer.from(hex, 'hex').toString('utf8');
+            console.log('Decoded as plaintext:', plaintext);
+            if (plaintext && /^\+?\d{6,}$/.test(plaintext.replace(/\s/g, ''))) {
+              phoneE164 = plaintext;
+              console.log('Found phone (plaintext):', phoneE164);
+            }
+          } catch (plaintextError) {
+            console.error('Plaintext decode error:', plaintextError);
+          }
         }
       }
     } catch (error) {
       console.error('Phone decryption error:', error);
+    }
+  }
+  
+  // If still no phone, try hash-based lookup from users table
+  if (!phoneE164 && data.phone_hash) {
+    try {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('phone_e164')
+        .not('phone_e164', 'is', null);
+      
+      if (userData) {
+        const makeHash = (e164) => {
+          const saltHex = process.env.ENCRYPTION_KEY_HEX || '';
+          const salt = Buffer.from(saltHex, 'hex');
+          const prefix = salt.length ? salt : Buffer.from('jokko-default-salt');
+          return crypto.createHash('sha256').update(Buffer.concat([prefix, Buffer.from(e164)])).digest('hex');
+        };
+        
+        for (const user of userData) {
+          if (user.phone_e164) {
+            const hash = makeHash(user.phone_e164);
+            if (hash === data.phone_hash) {
+              phoneE164 = user.phone_e164;
+              console.log('Found phone via hash lookup:', phoneE164);
+              break;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Hash lookup error:', error);
     }
   }
   // Phone lookup complete - no need to persist since we're using hash-based lookup
