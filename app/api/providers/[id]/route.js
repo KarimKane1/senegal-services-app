@@ -82,7 +82,7 @@ export async function GET(req, { params }) {
   const any = searchParams.get('any') === '1';
   const { data, error } = await supabase
     .from('provider')
-    .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,visibility,owner_user_id')
+    .select('id,name,service_type,city,photo_url,phone_enc,phone_hash,phone_e164,visibility,owner_user_id')
     .eq('id', id)
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -93,49 +93,16 @@ export async function GET(req, { params }) {
     name: data.name,
     hasPhoneEnc: !!data.phone_enc,
     hasPhoneHash: !!data.phone_hash,
-    phoneHash: data.phone_hash,
+    hasPhoneE164: !!data.phone_e164,
+    phoneE164: data.phone_e164,
     hasOwnerUserId: !!data.owner_user_id,
     ownerUserId: data.owner_user_id
   });
 
-  // Use the same approach as recommendations API - hash lookup only
-  let phoneE164 = '';
-  console.log('Provider phone lookup debug:', {
-    providerId: id,
-    hasPhoneHash: !!data.phone_hash,
-    phoneHash: data.phone_hash
-  });
+  // Try direct phone_e164 first (simplest approach)
+  let phoneE164 = data.phone_e164 || '';
   
-  // Look up phone from users table using hash
-  if (data.phone_hash) {
-    try {
-      // Use the exact same hash function as recommendations API
-      const hashPhoneE164 = (e164) => {
-        const saltHex = process.env.ENCRYPTION_KEY_HEX || '';
-        const salt = Buffer.from(saltHex, 'hex');
-        const prefix = salt.length ? salt : Buffer.from('jokko-default-salt');
-        return crypto.createHash('sha256').update(Buffer.concat([prefix, Buffer.from(e164)])).digest('hex');
-      };
-      const { data: users } = await supabase.from('users').select('phone_e164').not('phone_e164','is',null);
-      console.log('Checking', users?.length || 0, 'users for hash match');
-      for (const u of users || []) {
-        const e164 = u.phone_e164;
-        if (e164) {
-          const computedHash = hashPhoneE164(e164);
-          console.log('User phone:', e164, 'Computed hash:', computedHash, 'Matches:', computedHash === data.phone_hash);
-          if (computedHash === data.phone_hash) { 
-            phoneE164 = e164; 
-            console.log('Found phone via hash lookup:', e164);
-            break; 
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Hash lookup error:', error);
-    }
-  }
-
-  // Fallback: if no phone found via hash, try to get it from the owner's user record
+  // If no direct phone, try owner lookup
   if (!phoneE164 && data.owner_user_id) {
     try {
       const { data: owner } = await supabase
