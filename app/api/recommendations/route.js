@@ -308,7 +308,7 @@ export async function GET(req) {
       .limit(5);
     console.log('Quick test - first 5 recommendations:', allRecsTest);
     
-    const { data, error } = await query;
+    let { data, error } = await query;
     console.log('Recommendations query result:', { data: data?.length, error, userId });
     console.log('Raw recommendations data:', data);
     
