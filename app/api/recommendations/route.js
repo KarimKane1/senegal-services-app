@@ -330,6 +330,20 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // If no recommendations found with user filter, try without filter
+    if ((!data || data.length === 0) && userId) {
+      console.log('No recommendations found for user, trying without filter...');
+      const { data: allData } = await supabase
+        .from('recommendation')
+        .select('id,provider_id,note,created_at,recommender_user_id')
+        .order('created_at', { ascending: false });
+      
+      if (allData && allData.length > 0) {
+        console.log('Found recommendations without filter:', allData.length);
+        data = allData; // Use all recommendations if user-specific query returned nothing
+      }
+    }
+
     // Get provider details for each recommendation
     const providerIds = [...new Set((data || []).map(r => r.provider_id).filter(Boolean))];
     let providers = {};

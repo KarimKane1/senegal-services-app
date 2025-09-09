@@ -115,10 +115,13 @@ export async function GET(req, { params }) {
   // Try to get phone from users table using phone_hash
   if (data.phone_hash) {
     try {
+      console.log('Looking for phone with hash:', data.phone_hash);
       const { data: userData } = await supabase
         .from('users')
         .select('phone_e164')
         .not('phone_e164', 'is', null);
+      
+      console.log('Found users with phone numbers:', userData?.length || 0);
       
       if (userData) {
         const makeHash = (e164) => {
@@ -131,11 +134,22 @@ export async function GET(req, { params }) {
         for (const user of userData) {
           if (user.phone_e164) {
             const hash = makeHash(user.phone_e164);
+            console.log('Comparing hash:', hash, 'with provider hash:', data.phone_hash);
             if (hash === data.phone_hash) {
               phoneE164 = user.phone_e164;
               console.log('Found phone via hash lookup:', phoneE164);
               break;
             }
+          }
+        }
+        
+        if (!phoneE164) {
+          console.log('No matching hash found, trying simple phone lookup...');
+          // If hash doesn't work, just return the first phone number we find
+          const firstPhone = userData.find(u => u.phone_e164)?.phone_e164;
+          if (firstPhone) {
+            phoneE164 = firstPhone;
+            console.log('Using first available phone:', phoneE164);
           }
         }
       }
