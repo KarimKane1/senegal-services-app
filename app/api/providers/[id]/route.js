@@ -111,7 +111,29 @@ export async function GET(req, { params }) {
   // Start with empty phone - will try to find it
   let phoneE164 = '';
   
-  // If no direct phone, try owner lookup
+  // Try to decrypt phone_enc first (this used to work)
+  if (!phoneE164 && data.phone_enc) {
+    try {
+      const keyHex = process.env.ENCRYPTION_KEY_HEX;
+      if (keyHex && keyHex.length === 64) {
+        const key = Buffer.from(keyHex, 'hex');
+        const encrypted = Buffer.from(data.phone_enc, 'hex');
+        const iv = encrypted.slice(0, 12);
+        const tag = encrypted.slice(12, 28);
+        const ciphertext = encrypted.slice(28);
+        
+        const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(tag);
+        const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+        phoneE164 = decrypted.toString('utf8');
+        console.log('Found phone via decryption:', phoneE164);
+      }
+    } catch (error) {
+      console.error('Phone decryption error:', error);
+    }
+  }
+  
+  // If no decrypted phone, try owner lookup
   if (!phoneE164 && data.owner_user_id) {
     try {
       const { data: owner } = await supabase
