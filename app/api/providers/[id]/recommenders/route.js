@@ -6,7 +6,13 @@ export async function GET(_req, { params }) {
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('recommendation')
-    .select('id,created_at,note,recommender:recommender_user_id(id,name,photo_url)')
+    .select(`
+      id,
+      created_at,
+      note,
+      recommender_user_id,
+      users!recommender_user_id(id,name,photo_url)
+    `)
     .eq('provider_id', id)
     .order('created_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -20,10 +26,10 @@ export async function GET(_req, { params }) {
     if (likedMatch && likedMatch[1]) qualities = likedMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
     if (watchMatch && watchMatch[1]) watchFor = watchMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
     return {
-      id: row.recommender?.id || row.id,
-      name: row.recommender?.name || 'Member',
+      id: row.users?.id || row.id,
+      name: row.users?.name || 'Member',
       location: 'Dakar',
-      avatar: row.recommender?.photo_url || 'https://placehold.co/64x64',
+      avatar: row.users?.photo_url || 'https://placehold.co/64x64',
       dateAdded: row.created_at,
       qualities,
       watchFor,
