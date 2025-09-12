@@ -55,7 +55,10 @@ export function useAddRecommendation() {
       return res.json();
     },
     onSuccess: () => {
+      // Invalidate both recommendations and providers queries
+      // This ensures the ServicesTab refreshes when recommendations are added
       qc.invalidateQueries({ queryKey: ['recommendations'] });
+      qc.invalidateQueries({ queryKey: ['providers'] });
     },
   });
 }
@@ -69,7 +72,10 @@ export function useDeleteRecommendation() {
       return res.json();
     },
     onSuccess: () => {
+      // Invalidate both recommendations and providers queries
+      // This ensures the ServicesTab refreshes when recommendations are deleted
       qc.invalidateQueries({ queryKey: ['recommendations'] });
+      qc.invalidateQueries({ queryKey: ['providers'] });
     },
   });
 }
