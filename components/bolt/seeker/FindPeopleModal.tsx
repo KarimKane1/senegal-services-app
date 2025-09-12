@@ -2,7 +2,8 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { X, Search, MapPin, Users, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import InitialsAvatar from '../common/InitialsAvatar';
-import { useDiscoverUsers } from '../../../hooks/connections';
+import { useDiscoverUsers, useSentConnectionRequests } from '../../../hooks/connections';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FindPeopleModalProps {
   onClose: () => void;
@@ -12,10 +13,17 @@ interface FindPeopleModalProps {
 
 export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sentRequests, setSentRequests] = useState<string[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
   const { addConnection, user } = useAuth();
   const { data } = useDiscoverUsers(user?.id);
+  const { data: sentReqData } = useSentConnectionRequests(user?.id);
+  const queryClient = useQueryClient();
+  
+  // Get sent request recipient IDs from the API data
+  const sentRequests = ((sentReqData as any)?.items || []).map((req: any) => req.id);
+  console.log('sentRequests array:', sentRequests);
+  console.log('Amadou Kane ID:', '56f06ee9-dcca-42cc-ba0a-a060eb355d20');
+  console.log('Is Amadou in sentRequests?', sentRequests.includes('56f06ee9-dcca-42cc-ba0a-a060eb355d20'));
   const apiPeople = (data?.items as any[]) || [];
   const people = useMemo(() => apiPeople.map(p => ({
     id: p.id,
@@ -60,9 +68,15 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requester_user_id: user.id, recipient_user_id: person.id, requester_name: user.name, recipient_name: person.name }),
       });
-      if (res.ok) setSentRequests(prev => [...prev, personId]);
-    } catch {
-      // no-op for MVP
+      if (res.ok) {
+        // Request sent successfully - refresh the data
+        console.log('Request sent to:', personId);
+        queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
+      } else {
+        console.error('API error:', await res.json());
+      }
+    } catch (error) {
+      console.error('Network error:', error);
     }
   };
 
@@ -146,7 +160,7 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
                       }`}
                     >
                       {sentRequests.includes(person.id) ? (
-                        'Sent'
+                        'Request Sent'
                       ) : (
                         <>
                           <UserPlus className="w-3 md:w-4 h-3 md:h-4 mr-1 inline" />
@@ -160,15 +174,6 @@ export default function FindPeopleModal({ onClose }: FindPeopleModalProps) {
             </div>
           </div>
 
-          {/* Tips */}
-          <div className="bg-blue-50 rounded-lg p-3 md:p-4">
-            <h4 className="text-sm md:text-base font-semibold text-gray-900 mb-2">Tips for Growing Your Network</h4>
-            <ul className="text-xs md:text-sm text-gray-600 space-y-1">
-              <li>• Add people you know and trust in real life as friends</li>
-              <li>• Look for mutual connections to find trusted people</li>
-              <li>• The more connections you have, the better recommendations you&apos;ll get</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>

@@ -41,6 +41,9 @@ const en: Messages = {
   'auth.signInSubtitle': 'Sign in to your account',
   'auth.signingIn': 'Signing In...',
   'auth.dontHave': "Don't have an account?",
+  'auth.logout': 'Logout',
+  'auth.confirmLogout': 'Confirm Logout',
+  'auth.logoutWarning': 'Are you sure you want to logout? You will need to sign in again to access your account.',
   'landing.tagline': 'Digitizing trust through verified recommendations. Connect with reliable service providers through Lumio.',
   'landing.trusted': 'Lumio Networks',
   'landing.trustedText': 'Build your network of trusted service providers and connections',
@@ -97,6 +100,8 @@ const en: Messages = {
   'connections.contactViaWhatsApp': 'Contact via WhatsApp',
   'connections.viewRecommendations': 'View Recommendations',
   'connections.view': 'View',
+  'connections.acceptedRequest': '{name} accepted your friend request!',
+  'connections.nowInFriendsList': 'They are now in your friends list.',
   'provider.providerDetails': 'Provider Details',
   'provider.privateNumber': 'Private number',
   'provider.recommendedBy': 'Recommended by',
@@ -226,6 +231,9 @@ const fr: Messages = {
   'auth.signInSubtitle': 'Connectez-vous à votre compte',
   'auth.signingIn': 'Connexion...',
   'auth.dontHave': "Vous n'avez pas de compte ?",
+  'auth.logout': 'Déconnexion',
+  'auth.confirmLogout': 'Confirmer la déconnexion',
+  'auth.logoutWarning': 'Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.',
   'landing.tagline': 'Digitaliser la confiance grâce aux recommandations vérifiées. Connectez-vous à des prestataires fiables via Lumio.',
   'landing.trusted': 'Réseaux Lumio',
   'landing.trustedText': 'Développez votre réseau de prestataires et de connexions',
@@ -282,6 +290,8 @@ const fr: Messages = {
   'connections.contactViaWhatsApp': 'Contacter via WhatsApp',
   'connections.viewRecommendations': 'Voir les recommandations',
   'connections.view': 'Voir',
+  'connections.acceptedRequest': '{name} a accepté votre demande d\'ami !',
+  'connections.nowInFriendsList': 'Ils sont maintenant dans votre liste d\'amis.',
   'provider.providerDetails': 'Détails du prestataire',
   'provider.privateNumber': 'Numéro privé',
   'provider.recommendedBy': 'Recommandé par',
@@ -411,6 +421,9 @@ const wo: Messages = {
   'auth.signInSubtitle': 'Dugg ci sa akàunt',
   'auth.signingIn': 'Mi ngi dugg...',
   'auth.dontHave': 'Amuloo akàunt ?',
+  'auth.logout': 'Génn',
+  'auth.confirmLogout': 'Dëggal génn',
+  'auth.logoutWarning': 'Dëgg nga bëgg génn? Dangay am soppiku ngir jëkk a dugg ci sa akàunt.',
   'landing.tagline': 'Ñu digitalise wóor te mën a gëm. Jokk ak sarwiiser yu wér ci Lumio.',
   'landing.trusted': 'Réseau Lumio',
   'landing.trustedText': 'Yokk sa réseauu sarwiiser ak mbokk',
@@ -467,6 +480,8 @@ const wo: Messages = {
   'connections.contactViaWhatsApp': 'Jokkool ci WhatsApp',
   'connections.viewRecommendations': 'Gis ndigal yi',
   'connections.view': 'Gis',
+  'connections.acceptedRequest': '{name} am na la mbokk!',
+  'connections.nowInFriendsList': 'Ñu ngi ci sa listeu mbokk yi.',
   'provider.providerDetails': 'Xam-xam sarwiiser bi',
   'provider.privateNumber': 'Numeer bu ñuul',
   'provider.recommendedBy': 'Ndigaal nañu ko',
@@ -601,7 +616,15 @@ export function I18nProvider({ children, forcedLang }: { children: React.ReactNo
   const messages = catalogs[lang] || catalogs.en;
   const value = useMemo(() => ({
     lang,
-    t: (key: string) => messages[key] || catalogs.en[key] || key,
+    t: (key: string, params?: Record<string, any>) => {
+      let message = messages[key] || catalogs.en[key] || key;
+      if (params) {
+        Object.keys(params).forEach(param => {
+          message = message.replace(`{${param}}`, params[param]);
+        });
+      }
+      return message;
+    },
     setLang,
     isHydrated,
   }), [lang, messages, isHydrated]);

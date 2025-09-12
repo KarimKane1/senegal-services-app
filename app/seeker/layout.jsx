@@ -4,9 +4,10 @@ import Header from '../../components/bolt/layout/Header';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../components/context/AuthContext';
-import InteractiveOnboarding from '../../components/bolt/onboarding/InteractiveOnboarding';
+import EmbeddedOnboarding from '../../components/bolt/onboarding/EmbeddedOnboarding';
 import { useI18n } from '../../context/I18nContext';
 import RequestsBanner from '../../components/bolt/common/RequestsBanner';
+import GlobalAcceptanceBanner from '../../components/bolt/common/GlobalAcceptanceBanner';
 
 const tabs = [
   { id: 'services', label: 'Services', href: '/seeker/services' },
@@ -30,8 +31,22 @@ export default function SeekerLayout({ children }) {
     const path = window.location?.pathname || '';
     // Do not show onboarding when deep-linked to add recommendation flow
     const isDeepLinkAdd = path.includes('/seeker/recommendations/new');
-    if (!alreadyShown && user?.isFirstLogin && !isDeepLinkAdd) setShowOnboarding(true);
-  }, [user?.id, user?.isFirstLogin, isFirstLogin]);
+    
+    if (!alreadyShown && user?.isFirstLogin && !isDeepLinkAdd) {
+      // Automatically navigate to connections tab and show onboarding
+      if (path !== '/seeker/connections') {
+        router.push('/seeker/connections');
+        // Wait for navigation to complete before showing onboarding
+        setTimeout(() => setShowOnboarding(true), 100);
+      } else {
+        // Only show onboarding on the connections page initially
+        setShowOnboarding(true);
+      }
+    } else if (path !== '/seeker/connections' && path !== '/seeker/recommendations' && path !== '/seeker/services') {
+      // Hide onboarding if not on one of the onboarding pages
+      setShowOnboarding(false);
+    }
+  }, [user?.id, user?.isFirstLogin, isFirstLogin, pathname, router]);
 
   const handleCloseOnboarding = () => {
     setShowOnboarding(false);
@@ -65,6 +80,7 @@ export default function SeekerLayout({ children }) {
       <div className="max-w-6xl mx-auto px-2 md:px-4">
         <RequestsBanner />
       </div>
+      <GlobalAcceptanceBanner />
       <div className="max-w-6xl mx-auto px-2 md:px-4">
         <div className="py-4 pb-24 md:pb-28">{children}</div>
       </div>
@@ -105,7 +121,7 @@ export default function SeekerLayout({ children }) {
         </div>
       </div>
       {showOnboarding && (
-        <InteractiveOnboarding onComplete={handleCloseOnboarding} userType="seeker" onTabChange={handleOnboardingTabChange} />
+        <EmbeddedOnboarding onComplete={handleCloseOnboarding} userType="seeker" onTabChange={handleOnboardingTabChange} />
       )}
     </div>
   );

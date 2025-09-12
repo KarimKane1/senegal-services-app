@@ -65,6 +65,7 @@ export async function GET(req) {
           .select('id,name,photo_url')
           .eq('id', r.recipient_user_id)
           .maybeSingle();
+        console.log('API Debug: Recipient ID:', r.recipient_user_id, 'User found:', u?.name);
         items.push({
           id: r.recipient_user_id,
           name: (u && u.name) || 'Member',
@@ -97,8 +98,8 @@ export async function GET(req) {
     // Return current user's connections
     const { data, error } = await supabase
       .from('connection')
-      .select('user1_id,user2_id')
-      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+      .select('user_a_id,user_b_id')
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
     
     console.log('Connection query result:', { data: data?.length, error });
     if (error) {
@@ -106,7 +107,7 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message, details: error }, { status: 500 });
     }
     const otherIds = new Set(
-      (data || []).map((r) => (r.user1_id === userId ? r.user2_id : r.user1_id))
+      (data || []).map((r) => (r.user_a_id === userId ? r.user_b_id : r.user_a_id))
     );
     const { data: users, error: usersErr } = await supabase
       .from('users')
@@ -188,9 +189,9 @@ export async function GET(req) {
     // Neighbors of current user for mutual counts
     const { data: meConns } = await supabase
       .from('connection')
-      .select('user1_id,user2_id')
-      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
-    const myNeighbors = new Set((meConns || []).map(r => (r.user1_id === userId ? r.user2_id : r.user1_id)));
+      .select('user_a_id,user_b_id')
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+    const myNeighbors = new Set((meConns || []).map(r => (r.user_a_id === userId ? r.user_b_id : r.user_a_id)));
 
     // Exclude users already connected with current user
     baseItems = baseItems.filter(u => !myNeighbors.has(u.id));
@@ -207,9 +208,9 @@ export async function GET(req) {
       // Mutual connections between current user and u
       const { data: uConns } = await supabase
         .from('connection')
-        .select('user1_id,user2_id')
-        .or(`user1_id.eq.${u.id},user2_id.eq.${u.id}`);
-      const uNeighbors = new Set((uConns || []).map(r => (r.user1_id === u.id ? r.user2_id : r.user1_id)));
+        .select('user_a_id,user_b_id')
+        .or(`user_a_id.eq.${u.id},user_b_id.eq.${u.id}`);
+      const uNeighbors = new Set((uConns || []).map(r => (r.user_a_id === u.id ? r.user_b_id : r.user_a_id)));
       let mutual = 0;
       for (const nid of myNeighbors) {
         if (uNeighbors.has(nid)) mutual++;
@@ -217,6 +218,27 @@ export async function GET(req) {
 
       withCounts.push({ ...u, recommendationCount: recCount || 0, mutualConnections: mutual });
     }
+    
+    // Sort to prioritize Karim and Maymouna for onboarding
+    withCounts.sort((a, b) => {
+      const karimId = '2f03ff77-334e-4b9f-8afe-8c95b622bfff';
+      const maymounaId = '01997e80-ebbb-48eb-908c-3a3921ef0a4b';
+      
+      // Karim first
+      if (a.id === karimId) return -1;
+      if (b.id === karimId) return 1;
+      
+      // Maymouna second
+      if (a.id === maymounaId) return -1;
+      if (b.id === maymounaId) return 1;
+      
+      // Then by mutual connections, then by recommendation count
+      if (a.mutualConnections !== b.mutualConnections) {
+        return b.mutualConnections - a.mutualConnections;
+      }
+      return b.recommendationCount - a.recommendationCount;
+    });
+    
     return NextResponse.json({ items: withCounts });
   }
   return NextResponse.json({ items: baseItems });
@@ -237,6 +259,23 @@ export async function POST(req) {
     if (recipient_user_id) {
       await supabase.from('users').upsert({ id: recipient_user_id, name: recipient_name || null }, { onConflict: 'id' });
     }
+    
+    // Check if request already exists
+    const { data: existingRequest } = await supabase
+      .from('connection_request')
+      .select('id, status')
+      .eq('requester_user_id', requester_user_id)
+      .eq('recipient_user_id', recipient_user_id)
+      .maybeSingle();
+    
+    if (existingRequest) {
+      if (existingRequest.status === 'pending') {
+        return NextResponse.json({ error: 'Request already sent' }, { status: 409 });
+      } else if (existingRequest.status === 'approved') {
+        return NextResponse.json({ error: 'Already connected' }, { status: 409 });
+      }
+    }
+    
     const { data, error } = await supabase
       .from('connection_request')
       .insert({
@@ -274,9 +313,9 @@ export async function PATCH(req) {
       // First, check if connection already exists
       const { data: existingConnection, error: checkError } = await supabase
         .from('connection')
-        .select('user1_id, user2_id')
-        .eq('user1_id', a)
-        .eq('user2_id', b)
+        .select('user_a_id, user_b_id')
+        .eq('user_a_id', a)
+        .eq('user_b_id', b)
         .maybeSingle();
       
       if (checkError) {
@@ -322,12 +361,12 @@ export async function PATCH(req) {
       }
       
       // Create connection row
-      console.log('Creating connection:', { user1_id: a, user2_id: b });
+      console.log('Creating connection:', { user_a_id: a, user_b_id: b });
       
       const { data: connectionData, error: connectionError } = await supabase
         .from('connection')
-        .insert({ user1_id: a, user2_id: b })
-        .select('user1_id, user2_id')
+        .insert({ user_a_id: a, user_b_id: b })
+        .select('user_a_id, user_b_id')
         .single();
       
       console.log('Create connection result:', { connectionData, connectionError });

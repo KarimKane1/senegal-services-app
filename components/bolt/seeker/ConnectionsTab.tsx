@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserPlus, Users, Search, Bell } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import ConnectionCard from './ConnectionCard';
 import ConnectionProfile from './ConnectionProfile';
 import FindPeopleModal from './FindPeopleModal';
@@ -8,11 +9,13 @@ import GuestPromptModal from '../common/GuestPromptModal';
 import InitialsAvatar from '../common/InitialsAvatar';
 // Removed mock data import - using real data only
 import { useConnectionRequests, useSentConnectionRequests, useConnections, useDiscoverUsers } from '../../../hooks/connections';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../../context/I18nContext';
 import InviteFriendModal from './InviteFriendModal';
 
 export default function ConnectionsTab() {
+  const searchParams = useSearchParams();
   const [selectedConnection, setSelectedConnection] = React.useState<any>(null);
   const [showFindPeople, setShowFindPeople] = React.useState(false);
   const [showRequests, setShowRequests] = React.useState(false);
@@ -23,6 +26,7 @@ export default function ConnectionsTab() {
   const personModalRef = React.useRef<HTMLDivElement>(null);
   const { connections, isGuest, logout, user } = useAuth();
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const { data: networkData } = useConnections(user?.id);
   const { data: reqData } = useConnectionRequests(user?.id);
   const { data: sentReqData } = useSentConnectionRequests(user?.id);
@@ -31,7 +35,10 @@ export default function ConnectionsTab() {
   // Live pending requests count (only received requests should show notifications)
   const receivedRequests = ((reqData as any)?.items?.length as number) || 0;
   const sentRequests = ((sentReqData as any)?.items?.length as number) || 0;
-  const totalRequests = receivedRequests; // Only count received requests for notifications
+  const totalRequests = receivedRequests;
+  
+  // Get sent request IDs from the API data
+  const sentRequestIdsFromAPI = ((sentReqData as any)?.items || []).map((req: any) => req.id); // Only count received requests for notifications
   const firstRequest = receivedRequests > 0 ? ((reqData as any)!.items as any[])[0] : null;
   const [showRequestsBanner, setShowRequestsBanner] = React.useState(true);
 
@@ -41,6 +48,14 @@ export default function ConnectionsTab() {
       setShowRequestsBanner(true);
     }
   }, [receivedRequests]);
+
+  // Check for showRequests query parameter
+  React.useEffect(() => {
+    if (searchParams.get('showRequests') === 'true') {
+      setShowRequests(true);
+    }
+  }, [searchParams]);
+
 
   // Click outside to close person modal
   React.useEffect(() => {
@@ -100,7 +115,11 @@ export default function ConnectionsTab() {
           recipient_name: person.name 
         }),
       });
-      if (res.ok) setSentRequestIds(prev => [...prev, personId]);
+      if (res.ok) {
+        // Request sent successfully - refresh the data
+        console.log('Request sent to:', personId);
+        queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
+      }
     } catch {
       // no-op for MVP
     }
@@ -197,14 +216,14 @@ export default function ConnectionsTab() {
                       e.stopPropagation();
                       handleSendRequest(person.id);
                     }}
-                    disabled={sentRequestIds.includes(person.id)}
+                    disabled={sentRequestIdsFromAPI.includes(person.id)}
                     className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                      sentRequestIds.includes(person.id)
+                      sentRequestIdsFromAPI.includes(person.id)
                         ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                     }`}
                   >
-                    {sentRequestIds.includes(person.id) ? 'Request Sent' : 'Add Friend'}
+                    {sentRequestIdsFromAPI.includes(person.id) ? 'Request Sent' : 'Add Friend'}
                   </button>
                 </div>
               ))}
@@ -308,14 +327,14 @@ export default function ConnectionsTab() {
                       handleSendRequest(showPersonModal.id);
                       setShowPersonModal(null);
                     }}
-                    disabled={sentRequestIds.includes(showPersonModal.id)}
+                    disabled={sentRequestIdsFromAPI.includes(showPersonModal.id)}
                     className={`flex-1 py-2 px-4 rounded-lg text-white font-medium transition-colors ${
-                      sentRequestIds.includes(showPersonModal.id)
+                      sentRequestIdsFromAPI.includes(showPersonModal.id)
                         ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         : 'bg-indigo-600 hover:bg-indigo-700'
                     }`}
                   >
-                    {sentRequestIds.includes(showPersonModal.id) ? 'Request Sent' : 'Send Request'}
+                    {sentRequestIdsFromAPI.includes(showPersonModal.id) ? 'Request Sent' : 'Send Request'}
                   </button>
                 </div>
               </div>
@@ -323,6 +342,7 @@ export default function ConnectionsTab() {
           </div>
         </div>
       )}
+      
     </div>
   );
 }

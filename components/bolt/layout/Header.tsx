@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../../context/I18nContext';
+import LogoutConfirmModal from '../common/LogoutConfirmModal';
 
 interface HeaderProps {
   userType: 'seeker' | 'provider';
@@ -10,6 +11,20 @@ interface HeaderProps {
 export default function Header({ userType }: HeaderProps) {
   const { user, logout } = useAuth();
   const { t, isHydrated } = useI18n();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(false);
+    logout();
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
+  };
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -39,15 +54,21 @@ export default function Header({ userType }: HeaderProps) {
               />
             )}
             <button
-              onClick={logout}
+              onClick={handleLogoutClick}
               className="p-1 md:p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md md:rounded-lg transition-colors"
-              title="Logout"
+              title={t('auth.logout')}
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+      
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+      />
     </header>
   );
 }
