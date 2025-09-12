@@ -578,7 +578,7 @@ const catalogs: Record<string, Messages> = { en, fr, wo };
 
 interface I18nContextType {
   lang: string;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   setLang: (lang: string) => void;
   isHydrated: boolean;
 }
