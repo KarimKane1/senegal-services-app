@@ -110,6 +110,19 @@ export async function GET(req) {
     const otherIds = new Set(
       (data || []).map((r) => (r.user_a_id === userId ? r.user_b_id : r.user_a_id))
     );
+    console.log('Network debug:', { 
+      userId, 
+      connectionData: data?.length || 0, 
+      otherIds: Array.from(otherIds),
+      otherIdsSize: otherIds.size 
+    });
+    
+    // If no connections, return empty array instead of error
+    if (otherIds.size === 0) {
+      console.log('No connections found for user:', userId);
+      return NextResponse.json({ items: [] });
+    }
+    
     const { data: users, error: usersErr } = await supabase
       .from('users')
       .select('id,name,photo_url')
@@ -121,13 +134,23 @@ export async function GET(req) {
 
     // Recommendation counts per connected user
     const recCountByUser = new Map();
-    await Promise.all(Array.from(otherIds).map(async (oid) => {
-      const { count } = await supabase
-        .from('recommendation')
-        .select('*', { count: 'exact', head: true })
-        .eq('recommender_user_id', oid);
-      recCountByUser.set(oid, count || 0);
-    }));
+    try {
+      await Promise.all(Array.from(otherIds).map(async (oid) => {
+        try {
+          const { count } = await supabase
+            .from('recommendation')
+            .select('*', { count: 'exact', head: true })
+            .eq('recommender_user_id', oid);
+          recCountByUser.set(oid, count || 0);
+        } catch (recError) {
+          console.error('Error getting recommendation count for user:', oid, recError);
+          recCountByUser.set(oid, 0);
+        }
+      }));
+    } catch (error) {
+      console.error('Error in recommendation count batch:', error);
+      // Continue with empty counts rather than failing
+    }
 
     const items = (users || []).map((u) => ({
       id: u.id,
