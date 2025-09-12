@@ -115,8 +115,8 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
 
   // Check if both required friends have been added
   const checkFriendsAdded = () => {
-    const karimId = '2f03ff77-334e-4b9f-8afe-8c95b622bfff';
-    const maymounaId = '01997e80-ebbb-48eb-908c-3a3921ef0a4b';
+    const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
+    const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
     
     const karimAdded = isFriendRequestSent(karimId);
     const maymounaAdded = isFriendRequestSent(maymounaId);
@@ -153,8 +153,8 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
 
   const autoAcceptOnboardingFriends = async () => {
     try {
-      const karimId = '2f03ff77-334e-4b9f-8afe-8c95b622bfff';
-      const maymounaId = '01997e80-ebbb-48eb-908c-3a3921ef0a4b';
+      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
+      const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
       
       // Accept friend requests from Karim and Maymouna
       const acceptPromises = [karimId, maymounaId].map(async (friendId) => {
@@ -203,16 +203,81 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
       const data = await response.json();
       
       // Filter to only show Karim and Maymouna for onboarding
-      const karimId = '2f03ff77-334e-4b9f-8afe-8c95b622bfff';
-      const maymounaId = '01997e80-ebbb-48eb-908c-3a3921ef0a4b';
+      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
+      const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
       
       const filteredSuggestions = (data.items || []).filter((item: any) => 
         item.id === karimId || item.id === maymounaId
       );
       
-      setSuggestions(filteredSuggestions);
+      // If we don't have both users from API, create fallback cards for onboarding
+      if (filteredSuggestions.length < 2) {
+        const fallbackSuggestions = [
+          {
+            id: karimId,
+            name: 'Karim Kane',
+            location: 'Dakar',
+            avatar: null,
+            mutualConnections: 0,
+            mutualNames: [],
+            recommendationCount: 0,
+            masked_phone: '+1 *****3750'
+          },
+          {
+            id: maymounaId,
+            name: 'Maymouna Kane',
+            location: 'Dakar',
+            avatar: null,
+            mutualConnections: 0,
+            mutualNames: [],
+            recommendationCount: 0,
+            masked_phone: '+1 *****4440'
+          }
+        ];
+        
+        // Merge API results with fallback (prioritize API data if available)
+        const mergedSuggestions = [];
+        const apiIds = new Set(filteredSuggestions.map(item => item.id));
+        
+        // Add API results first
+        mergedSuggestions.push(...filteredSuggestions);
+        
+        // Add fallback for missing users
+        fallbackSuggestions.forEach(fallback => {
+          if (!apiIds.has(fallback.id)) {
+            mergedSuggestions.push(fallback);
+          }
+        });
+        
+        setSuggestions(mergedSuggestions);
+      } else {
+        setSuggestions(filteredSuggestions);
+      }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
+      // Fallback to hardcoded suggestions if API fails
+      setSuggestions([
+        {
+          id: '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9',
+          name: 'Karim Kane',
+          location: 'Dakar',
+          avatar: null,
+          mutualConnections: 0,
+          mutualNames: [],
+          recommendationCount: 0,
+          masked_phone: '+1 *****3750'
+        },
+        {
+          id: 'ce599012-6457-4e6b-b81a-81da8e740f74',
+          name: 'Maymouna Kane',
+          location: 'Dakar',
+          avatar: null,
+          mutualConnections: 0,
+          mutualNames: [],
+          recommendationCount: 0,
+          masked_phone: '+1 *****4440'
+        }
+      ]);
     }
   };
 
