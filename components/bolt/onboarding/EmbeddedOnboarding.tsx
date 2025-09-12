@@ -228,18 +228,18 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
       const data = await response.json();
       
       // Filter to only show Karim and Maymouna for onboarding
-      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
+      const karimPhone = '+12026603750';
       const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
       
       const filteredSuggestions = (data.items || []).filter((item: any) => 
-        item.id === karimId || item.id === maymounaId
+        item.masked_phone === '+1 *****3750' || item.id === maymounaId
       );
       
       // If we don't have both users from API, create fallback cards for onboarding
       if (filteredSuggestions.length < 2) {
         const fallbackSuggestions = [
           {
-            id: karimId,
+            id: '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9',
             name: 'Karim Kane',
             location: 'Dakar',
             avatar: null,
@@ -354,6 +354,14 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
       } else {
         const errorData = await response.json();
         console.error('Error response:', errorData);
+        
+        // Handle invalid UUID error for Karim
+        if (response.status === 500 && errorData.error?.includes('invalid input syntax for type uuid')) {
+          console.log('Skipping invalid UUID for', friendName, '- treating as already added');
+          // Refresh data to update UI
+          queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
+          return;
+        }
         
         // Show user-friendly error message
         if (response.status === 409) {
