@@ -113,6 +113,26 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     return sentRequests.some((req: any) => req.id === friendId && req.status === 'pending');
   };
 
+  const checkConnectionStatus = async (friendId: string) => {
+    try {
+      // Check if there's already a connection
+      const response = await fetch(`/api/connections?network=1&userId=${user?.id}`);
+      const data = await response.json();
+      const isConnected = (data.items || []).some((item: any) => item.id === friendId);
+      
+      // Check if there's a pending request
+      const sentResponse = await fetch(`/api/connections?sentRequests=1&userId=${user?.id}`);
+      const sentData = await sentResponse.json();
+      const hasPendingRequest = (sentData.items || []).some((item: any) => item.id === friendId);
+      
+      console.log('Connection status for', friendId, ':', { isConnected, hasPendingRequest });
+      return { isConnected, hasPendingRequest };
+    } catch (error) {
+      console.error('Error checking connection status:', error);
+      return { isConnected: false, hasPendingRequest: false };
+    }
+  };
+
   // Check if both required friends have been added
   const checkFriendsAdded = () => {
     const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
@@ -284,7 +304,25 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
   const handleAddFriend = async (friendId: string, friendName: string) => {
     setLoading(true);
     try {
-      console.log('Adding friend:', friendId, friendName);
+      console.log('Adding friend:', friendId, friendName, 'from user:', user?.id);
+      
+      // Check connection status first
+      const { isConnected, hasPendingRequest } = await checkConnectionStatus(friendId);
+      
+      if (isConnected) {
+        console.log('Already connected to', friendName);
+        // Refresh data to update UI
+        queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
+        return;
+      }
+      
+      if (hasPendingRequest) {
+        console.log('Request already pending to', friendName);
+        // Refresh data to update UI
+        queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
+        return;
+      }
+      
       const response = await fetch('/api/connections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -305,6 +343,15 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
       } else {
         const errorData = await response.json();
         console.error('Error response:', errorData);
+        
+        // Show user-friendly error message
+        if (response.status === 409) {
+          if (errorData.error === 'Request already sent') {
+            console.log('Request already sent to', friendName);
+          } else if (errorData.error === 'Already connected') {
+            console.log('Already connected to', friendName);
+          }
+        }
       }
     } catch (error) {
       console.error('Error adding friend:', error);
