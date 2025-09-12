@@ -221,8 +221,8 @@ export async function GET(req) {
     
     // Sort to prioritize Karim and Maymouna for onboarding
     withCounts.sort((a, b) => {
-      const karimId = '2f03ff77-334e-4b9f-8afe-8c95b622bfff';
-      const maymounaId = '01997e80-ebbb-48eb-908c-3a3921ef0a4b';
+      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
+      const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
       
       // Karim first
       if (a.id === karimId) return -1;
