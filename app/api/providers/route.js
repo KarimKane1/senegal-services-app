@@ -80,23 +80,24 @@ export async function GET(req) {
   // For performance, this is a naive per-row fetch for MVP
   const items = await Promise.all(
     (data || []).map(async (prov) => {
-      const { data: votes } = await supabase
-        .from('provider_attribute_vote')
-        .select('attribute,vote')
-        .eq('provider_id', prov.id);
-      const mapAttr = {
-        job_quality: 'Job quality',
-        timeliness: 'Timeliness',
-        cleanliness: 'Clean & Organized',
-        respectfulness: 'Professional',
-        reliability: 'Reliable & Trustworthy',
-      };
-      const likes = (votes || []).filter(v => v.vote === 'like').map(v => mapAttr[v.attribute] || v.attribute);
-      // Notes come from recommendations.note parsing
+      // Get likes from recommendation notes instead of votes table
       const { data: recs } = await supabase
         .from('recommendation')
         .select('note,recommender_user_id,users(id,name)')
         .eq('provider_id', prov.id);
+      
+      // Parse likes from recommendation notes
+      const likeCounts = new Map();
+      for (const r of (recs || [])) {
+        const note = r.note || '';
+        const m = note.match(/Liked:\s*([^|]+)/i);
+        if (m && m[1]) {
+          m[1].split(',').map(s => s.trim()).filter(Boolean).forEach(lbl => 
+            likeCounts.set(lbl, (likeCounts.get(lbl) || 0) + 1)
+          );
+        }
+      }
+      const likes = Array.from(likeCounts.entries()).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
       const watchCounts = new Map();
       for (const r of (recs || [])) {
         const note = r.note || '';
