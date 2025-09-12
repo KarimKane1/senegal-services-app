@@ -8,6 +8,7 @@ export async function GET(req) {
   const wantsSentRequests = searchParams.get('sentRequests') === '1';
   const wantsNetwork = searchParams.get('network') === '1';
   const wantsDiscover = searchParams.get('discover') === '1';
+  const searchPhone = searchParams.get('searchPhone');
   const supabase = supabaseServer();
   // For MVP: if requests=1 return a small list of pending requests derived from users
   if (wantsRequests) {
@@ -147,6 +148,12 @@ export async function GET(req) {
     discoverQuery = discoverQuery
       .or('user_type.is.null,user_type.eq.seeker')
       .neq('name', '');
+    
+    // If searching by phone, add phone filter
+    if (searchPhone) {
+      console.log('Searching for user with phone:', searchPhone);
+      discoverQuery = discoverQuery.eq('phone_e164', searchPhone);
+    }
   } else {
     discoverQuery = discoverQuery
       .neq('id', '00000000-0000-0000-0000-000000000000');

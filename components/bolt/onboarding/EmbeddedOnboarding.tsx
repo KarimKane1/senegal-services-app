@@ -135,18 +135,22 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
 
   // Check if both required friends have been added
   const checkFriendsAdded = () => {
-    const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
     const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
     
-    const karimAdded = isFriendRequestSent(karimId);
+    // Find Karim's real ID from suggestions
+    const karimSuggestion = suggestions.find(s => s.name === 'Karim Kane' && !s.isHardcoded);
+    const karimId = karimSuggestion?.id;
+    
+    // Check if both real friends have been added
+    const karimAdded = karimId ? isFriendRequestSent(karimId) : false;
     const maymounaAdded = isFriendRequestSent(maymounaId);
     
-    console.log('Onboarding Debug: Karim added:', karimAdded, 'Maymouna added:', maymounaAdded);
+    console.log('Onboarding Debug: Karim ID:', karimId, 'Karim added:', karimAdded, 'Maymouna added:', maymounaAdded);
     console.log('Onboarding Debug: Current step:', currentStep, 'Friends added state:', friendsAdded);
     console.log('Onboarding Debug: Sent requests data:', sentReqData);
     
     if (karimAdded && maymounaAdded && !friendsAdded) {
-      console.log('Onboarding Debug: Both friends added, moving to step 2');
+      console.log('Onboarding Debug: Both REAL friends added, moving to step 2');
       setFriendsAdded(true);
       setTimeout(() => setCurrentStep(2), 1500);
     } else {
@@ -224,85 +228,70 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
 
   const fetchSuggestions = async () => {
     try {
-      const response = await fetch(`/api/connections?discover=1&userId=${user?.id}`);
-      const data = await response.json();
-      
-      // Filter to only show Karim and Maymouna for onboarding
+      // First, try to find Karim by phone number directly
       const karimPhone = '+12026603750';
       const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
       
-      const filteredSuggestions = (data.items || []).filter((item: any) => 
-        item.masked_phone === '+1 *****3750' || item.id === maymounaId
+      console.log('Searching for Karim with phone:', karimPhone);
+      
+      // Make a direct query to find Karim by phone
+      const karimResponse = await fetch(`/api/connections?discover=1&userId=${user?.id}&searchPhone=${encodeURIComponent(karimPhone)}`);
+      const karimData = await karimResponse.json();
+      
+      // Also get the regular discover results
+      const response = await fetch(`/api/connections?discover=1&userId=${user?.id}`);
+      const data = await response.json();
+      
+      console.log('Karim search results:', karimData);
+      console.log('Regular discover results:', data);
+      
+      // Look for Karim by phone number in both responses
+      const karimFromAPI = (karimData.items || []).find((item: any) => 
+        item.masked_phone === '+1 *****3750' || 
+        (item.phone_e164 && item.phone_e164.includes('2026603750'))
+      ) || (data.items || []).find((item: any) => 
+        item.masked_phone === '+1 *****3750' || 
+        (item.phone_e164 && item.phone_e164.includes('2026603750'))
       );
       
-      // If we don't have both users from API, create fallback cards for onboarding
-      if (filteredSuggestions.length < 2) {
-        const fallbackSuggestions = [
-          {
-            id: '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9',
-            name: 'Karim Kane',
-            location: 'Dakar',
-            avatar: null,
-            mutualConnections: 0,
-            mutualNames: [],
-            recommendationCount: 0,
-            masked_phone: '+1 *****3750'
-          },
-          {
-            id: maymounaId,
-            name: 'Maymouna Kane',
-            location: 'Dakar',
-            avatar: null,
-            mutualConnections: 0,
-            mutualNames: [],
-            recommendationCount: 0,
-            masked_phone: '+1 *****4440'
-          }
-        ];
-        
-        // Merge API results with fallback (prioritize API data if available)
-        const mergedSuggestions = [];
-        const apiIds = new Set(filteredSuggestions.map(item => item.id));
-        
-        // Add API results first
-        mergedSuggestions.push(...filteredSuggestions);
-        
-        // Add fallback for missing users
-        fallbackSuggestions.forEach(fallback => {
-          if (!apiIds.has(fallback.id)) {
-            mergedSuggestions.push(fallback);
-          }
+      // Look for Maymouna by ID
+      const maymounaFromAPI = (data.items || []).find((item: any) => 
+        item.id === maymounaId
+      );
+      
+      const onboardingSuggestions = [];
+      
+      // Add Karim - MUST be real, no fallback
+      if (karimFromAPI) {
+        console.log('✅ Found Karim in API with ID:', karimFromAPI.id);
+        onboardingSuggestions.push({
+          ...karimFromAPI,
+          isHardcoded: false
         });
-        
-        setSuggestions(mergedSuggestions);
       } else {
-        setSuggestions(filteredSuggestions);
+        console.error('❌ CRITICAL: Karim not found in database! Phone:', karimPhone);
+        // This should never happen - Karim must exist
+        throw new Error('Karim Kane not found in database - onboarding cannot proceed');
       }
+      
+      // Add Maymouna - MUST be real, no fallback
+      if (maymounaFromAPI) {
+        console.log('✅ Found Maymouna in API with ID:', maymounaFromAPI.id);
+        onboardingSuggestions.push({
+          ...maymounaFromAPI,
+          isHardcoded: false
+        });
+      } else {
+        console.error('❌ CRITICAL: Maymouna not found in database! ID:', maymounaId);
+        // This should never happen - Maymouna must exist
+        throw new Error('Maymouna Kane not found in database - onboarding cannot proceed');
+      }
+      
+      setSuggestions(onboardingSuggestions);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
-      // Fallback to hardcoded suggestions if API fails
-      setSuggestions([
-        {
-          id: '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9',
-          name: 'Karim Kane',
-          location: 'Dakar',
-          avatar: null,
-          mutualConnections: 0,
-          mutualNames: [],
-          recommendationCount: 0,
-          masked_phone: '+1 *****3750'
-        },
-        {
-          id: 'ce599012-6457-4e6b-b81a-81da8e740f74',
-          name: 'Maymouna Kane',
-          location: 'Dakar',
-          avatar: null,
-          mutualConnections: 0,
-          mutualNames: [],
-          recommendationCount: 0,
-          masked_phone: '+1 *****4440'
-        }
-      ]);
+      // No fallback - this is critical for onboarding
+      throw error;
     }
   };
 
@@ -310,22 +299,23 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     setLoading(true);
     try {
       console.log('Adding friend:', friendId, friendName, 'from user:', user?.id);
-      console.log('Friend ID type:', typeof friendId, 'Length:', friendId?.length);
-      console.log('Friend ID value:', JSON.stringify(friendId));
+      
+      // ALL requests must be real - no simulation allowed
+      if (friendId === 'karim-hardcoded') {
+        throw new Error('Invalid friend ID - Karim must be found in database');
+      }
       
       // Check connection status first
       const { isConnected, hasPendingRequest } = await checkConnectionStatus(friendId);
       
       if (isConnected) {
         console.log('Already connected to', friendName);
-        // Refresh data to update UI
         queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
         return;
       }
       
       if (hasPendingRequest) {
         console.log('Request already pending to', friendName);
-        // Refresh data to update UI
         queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
         return;
       }
@@ -337,7 +327,7 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
         recipient_name: friendName,
       };
       
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      console.log('Sending REAL friend request:', JSON.stringify(requestBody, null, 2));
       
       const response = await fetch('/api/connections', {
         method: 'POST',
@@ -348,20 +338,11 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
       console.log('Add friend response:', response.status);
       
       if (response.ok) {
-        // Refresh the sent requests data (same as regular app)
         queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
-        console.log('Request sent successfully, refreshing data...');
+        console.log('✅ REAL request sent successfully to', friendName);
       } else {
         const errorData = await response.json();
-        console.error('Error response:', errorData);
-        
-        // Handle invalid UUID error for Karim
-        if (response.status === 500 && errorData.error?.includes('invalid input syntax for type uuid')) {
-          console.log('Skipping invalid UUID for', friendName, '- treating as already added');
-          // Refresh data to update UI
-          queryClient.refetchQueries({ queryKey: ['sent-connection-requests'] });
-          return;
-        }
+        console.error('❌ Error sending real request:', errorData);
         
         // Show user-friendly error message
         if (response.status === 409) {
