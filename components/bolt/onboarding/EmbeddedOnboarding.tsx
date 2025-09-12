@@ -310,6 +310,8 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     setLoading(true);
     try {
       console.log('Adding friend:', friendId, friendName, 'from user:', user?.id);
+      console.log('Friend ID type:', typeof friendId, 'Length:', friendId?.length);
+      console.log('Friend ID value:', JSON.stringify(friendId));
       
       // Check connection status first
       const { isConnected, hasPendingRequest } = await checkConnectionStatus(friendId);
@@ -328,15 +330,19 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
         return;
       }
       
+      const requestBody = {
+        requester_user_id: user?.id,
+        recipient_user_id: friendId,
+        requester_name: user?.name,
+        recipient_name: friendName,
+      };
+      
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      
       const response = await fetch('/api/connections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requester_user_id: user?.id,
-          recipient_user_id: friendId,
-          requester_name: user?.name,
-          recipient_name: friendName,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log('Add friend response:', response.status);
