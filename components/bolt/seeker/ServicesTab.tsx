@@ -57,7 +57,18 @@ export default function ServicesTab() {
   });
   
   console.log('ServicesTab Debug - Mapped providers:', mappedLive);
-  const allProviders = [...mappedLive, ...availableProviders];
+  
+  // Only show providers that have recommenders (network recommendations)
+  // Filter out providers with no recommenders or only self-recommendations
+  const networkProviders = mappedLive.filter(provider => 
+    provider.recommenders && 
+    provider.recommenders.length > 0 &&
+    provider.recommenders.some(rec => rec.id !== user?.id) // Has recommendations from others
+  );
+  
+  console.log('ServicesTab Debug - Network providers (filtered):', networkProviders);
+  
+  const allProviders = [...networkProviders, ...availableProviders];
 
   // Get user's network connections
   const userConnections = (connectionsData as any)?.items || [];
