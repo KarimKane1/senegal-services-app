@@ -122,11 +122,10 @@ export async function GET(req) {
     // Recommendation counts per connected user
     const recCountByUser = new Map();
     await Promise.all(Array.from(otherIds).map(async (oid) => {
-      const response = await supabase
+      const { count } = await supabase
         .from('recommendation')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('recommender_user_id', oid);
-      const count = response?.count || 0;
       recCountByUser.set(oid, count || 0);
     }));
 
