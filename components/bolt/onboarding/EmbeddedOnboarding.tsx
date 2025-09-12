@@ -142,10 +142,15 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     const maymounaAdded = isFriendRequestSent(maymounaId);
     
     console.log('Onboarding Debug: Karim added:', karimAdded, 'Maymouna added:', maymounaAdded);
+    console.log('Onboarding Debug: Current step:', currentStep, 'Friends added state:', friendsAdded);
+    console.log('Onboarding Debug: Sent requests data:', sentReqData);
     
     if (karimAdded && maymounaAdded && !friendsAdded) {
+      console.log('Onboarding Debug: Both friends added, moving to step 2');
       setFriendsAdded(true);
       setTimeout(() => setCurrentStep(2), 1500);
+    } else {
+      console.log('Onboarding Debug: Not moving to step 2 yet. Karim:', karimAdded, 'Maymouna:', maymounaAdded, 'FriendsAdded:', friendsAdded);
     }
   };
 
