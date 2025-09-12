@@ -25,23 +25,38 @@ export default function ServicesTab() {
   const queryClient = useQueryClient();
   const liveProviders = (data?.items as any[]) || [];
   
+  // Debug: Log the raw provider data
+  console.log('ServicesTab Debug - Raw provider data:', liveProviders);
+  
   // Combine mock providers with providers from accepted connections
-  const mappedLive = liveProviders.map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    serviceType: p.service_type || p.serviceType,
-    location: p.city || '',
-    avatar: p.photo_url || 'https://placehold.co/64x64',
-    phone: '',
-    recommendedBy: undefined,
-    // Filter out recommendations from the current user
-    recommenders: (p.recommenders || [])
-      .map((r: any) => ({ id: r.id, name: r.name }))
-      .filter((r: any) => r.id !== user?.id), // Don't show current user's own recommendations
-    isNetworkRecommendation: true,
-    qualities: (p.top_likes || []).slice(0, 3),
-    watchFor: (p.top_watch || []).slice(0, 2),
-  }));
+  const mappedLive = liveProviders.map((p: any) => {
+    console.log('ServicesTab Debug - Mapping provider:', {
+      id: p.id,
+      name: p.name,
+      top_likes: p.top_likes,
+      top_watch: p.top_watch,
+      recommenders: p.recommenders
+    });
+    
+    return {
+      id: p.id,
+      name: p.name,
+      serviceType: p.service_type || p.serviceType,
+      location: p.city || '',
+      avatar: p.photo_url || 'https://placehold.co/64x64',
+      phone: '',
+      recommendedBy: undefined,
+      // Filter out recommendations from the current user
+      recommenders: (p.recommenders || [])
+        .map((r: any) => ({ id: r.id, name: r.name }))
+        .filter((r: any) => r.id !== user?.id), // Don't show current user's own recommendations
+      isNetworkRecommendation: true,
+      qualities: (p.top_likes || []).slice(0, 3),
+      watchFor: (p.top_watch || []).slice(0, 2),
+    };
+  });
+  
+  console.log('ServicesTab Debug - Mapped providers:', mappedLive);
   const allProviders = [...mappedLive, ...availableProviders];
 
   // Get user's network connections
