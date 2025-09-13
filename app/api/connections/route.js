@@ -248,20 +248,8 @@ export async function GET(req) {
       withCounts.push({ ...u, recommendationCount: recCount || 0, mutualConnections: mutual });
     }
     
-    // Sort to prioritize Karim and Maymouna for onboarding
+    // Sort by mutual connections, then by recommendation count
     withCounts.sort((a, b) => {
-      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5ce11dcaa9';
-      const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
-      
-      // Karim first
-      if (a.id === karimId) return -1;
-      if (b.id === karimId) return 1;
-      
-      // Maymouna second
-      if (a.id === maymounaId) return -1;
-      if (b.id === maymounaId) return 1;
-      
-      // Then by mutual connections, then by recommendation count
       if (a.mutualConnections !== b.mutualConnections) {
         return b.mutualConnections - a.mutualConnections;
       }

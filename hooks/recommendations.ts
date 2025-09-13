@@ -59,6 +59,8 @@ export function useAddRecommendation() {
       // This ensures the ServicesTab refreshes when recommendations are added
       qc.invalidateQueries({ queryKey: ['recommendations'] });
       qc.invalidateQueries({ queryKey: ['providers'] });
+      // Also invalidate all provider queries with different parameters
+      qc.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'providers' });
     },
   });
 }
@@ -76,6 +78,8 @@ export function useDeleteRecommendation() {
       // This ensures the ServicesTab refreshes when recommendations are deleted
       qc.invalidateQueries({ queryKey: ['recommendations'] });
       qc.invalidateQueries({ queryKey: ['providers'] });
+      // Also invalidate all provider queries with different parameters
+      qc.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'providers' });
     },
   });
 }

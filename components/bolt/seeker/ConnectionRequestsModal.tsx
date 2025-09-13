@@ -66,7 +66,8 @@ export default function ConnectionRequestsModal({ onClose }: ConnectionRequestsM
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Failed to accept request:', errorText);
+        console.error('Failed to accept request:', response.status, errorText);
+        alert(`Failed to accept friend request: ${errorText}`);
         return;
       }
       

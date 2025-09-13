@@ -52,12 +52,19 @@ export default function RequestsBanner() {
                         });
                         
                         if (response.ok) {
+                          const result = await response.json();
+                          console.log('Friend request accepted successfully:', result);
+                          
                           // Force refetch all related queries
                           await Promise.all([
                             qc.refetchQueries({ queryKey: ['connection-requests', user?.id || 'me'] }),
                             qc.refetchQueries({ queryKey: ['connections', user?.id || 'me'] }),
                             qc.refetchQueries({ queryKey: ['sent-connection-requests', user?.id || 'me'] })
                           ]);
+                        } else {
+                          const errorText = await response.text();
+                          console.error('Failed to accept friend request:', response.status, errorText);
+                          alert(`Failed to accept friend request: ${errorText}`);
                         }
                       } catch (error) {
                         console.error('Error accepting request:', error);

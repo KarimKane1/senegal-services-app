@@ -133,29 +133,11 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     }
   };
 
-  // Check if both required friends have been added
+  // Check if user has completed the friend demonstration
   const checkFriendsAdded = () => {
-    const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
-    
-    // Find Karim's real ID from suggestions
-    const karimSuggestion = suggestions.find(s => s.name === 'Karim Kane' && !s.isHardcoded);
-    const karimId = karimSuggestion?.id;
-    
-    // Check if both real friends have been added
-    const karimAdded = karimId ? isFriendRequestSent(karimId) : false;
-    const maymounaAdded = isFriendRequestSent(maymounaId);
-    
-    console.log('Onboarding Debug: Karim ID:', karimId, 'Karim added:', karimAdded, 'Maymouna added:', maymounaAdded);
-    console.log('Onboarding Debug: Current step:', currentStep, 'Friends added state:', friendsAdded);
-    console.log('Onboarding Debug: Sent requests data:', sentReqData);
-    
-    if (karimAdded && maymounaAdded && !friendsAdded) {
-      console.log('Onboarding Debug: Both REAL friends added, moving to step 2');
-      setFriendsAdded(true);
-      setTimeout(() => setCurrentStep(2), 1500);
-    } else {
-      console.log('Onboarding Debug: Not moving to step 2 yet. Karim:', karimAdded, 'Maymouna:', maymounaAdded, 'FriendsAdded:', friendsAdded);
-    }
+    // For onboarding, we'll wait for the user to actually click "Add Friend" on Lumi
+    // No automatic progression - user must interact
+    console.log('Onboarding Debug: Waiting for user to click Add Friend on Lumi');
   };
 
   // Check friends status when sent requests data changes
@@ -182,7 +164,7 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
 
   const autoAcceptOnboardingFriends = async () => {
     try {
-      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5celldcaa9';
+      const karimId = '8cdb51a1-4e0c-498d-b5fc-bc5ce11dcaa9';
       const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
       
       // Accept friend requests from Karim and Maymouna
@@ -227,129 +209,26 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
   }, [currentStep]);
 
   const fetchSuggestions = async () => {
-    try {
-      const karimPhone = '+12026603750';
-      const maymounaId = 'ce599012-6457-4e6b-b81a-81da8e740f74';
-      
-      console.log('Searching for Karim with phone:', karimPhone);
-      
-      // Try to get discover results with error handling
-      let data = { items: [] };
-      try {
-        const response = await fetch(`/api/connections?discover=1&userId=${user?.id}`);
-        if (response.ok) {
-          data = await response.json();
-          console.log('Regular discover results:', data);
-        } else {
-          console.error('API error:', response.status, await response.text());
-        }
-      } catch (apiError) {
-        console.error('API call failed:', apiError);
+    // For onboarding demonstration, show a mock friend suggestion with "Lumi"
+    console.log('Onboarding Debug: Creating demonstration suggestions');
+    
+    const demoSuggestions = [
+      {
+        id: 'demo-lumi-friend',
+        name: 'Lumi',
+        location: 'Dakar',
+        avatar: null,
+        isDemo: true,
+        mutualConnections: 0,
+        mutualNames: [],
+        recommendationCount: 0,
+        masked_phone: '+1 *****0000',
+        description: 'Your friendly Lumio guide! Click "Add Friend" to see how it works.'
       }
-      
-      // Try phone search with error handling
-      let karimData = { items: [] };
-      try {
-        const karimResponse = await fetch(`/api/connections?discover=1&userId=${user?.id}&searchPhone=${encodeURIComponent(karimPhone)}`);
-        if (karimResponse.ok) {
-          karimData = await karimResponse.json();
-          console.log('Karim search results:', karimData);
-        } else {
-          console.error('Karim search API error:', karimResponse.status, await karimResponse.text());
-        }
-      } catch (karimError) {
-        console.error('Karim search failed:', karimError);
-      }
-      
-      // Look for Karim by phone number in both responses
-      const karimFromAPI = (karimData.items || []).find((item: any) => 
-        item.masked_phone === '+1 *****3750' || 
-        (item.phone_e164 && item.phone_e164.includes('2026603750'))
-      ) || (data.items || []).find((item: any) => 
-        item.masked_phone === '+1 *****3750' || 
-        (item.phone_e164 && item.phone_e164.includes('2026603750'))
-      );
-      
-      // Look for Maymouna by ID
-      const maymounaFromAPI = (data.items || []).find((item: any) => 
-        item.id === maymounaId
-      );
-      
-      const onboardingSuggestions = [];
-      
-      // Add Karim - use real UUID
-      if (karimFromAPI) {
-        console.log('✅ Found Karim in API with ID:', karimFromAPI.id);
-        onboardingSuggestions.push({
-          ...karimFromAPI,
-          isHardcoded: false
-        });
-      } else {
-        console.log('⚠️ Karim not found in API, using real UUID');
-        onboardingSuggestions.push({
-          id: '8cdb51a1-4e0c-498d-b5fc-bc5ce11dcaa9', // Real UUID
-          name: 'Karim Kane',
-          location: 'Dakar',
-          avatar: null,
-          mutualConnections: 0,
-          mutualNames: [],
-          recommendationCount: 0,
-          masked_phone: '+1 *****3750',
-          isHardcoded: false
-        });
-      }
-      
-      // Add Maymouna - use hardcoded data if API fails
-      if (maymounaFromAPI) {
-        console.log('✅ Found Maymouna in API with ID:', maymounaFromAPI.id);
-        onboardingSuggestions.push({
-          ...maymounaFromAPI,
-          isHardcoded: false
-        });
-      } else {
-        console.log('⚠️ Maymouna not found in API, using hardcoded data');
-        onboardingSuggestions.push({
-          id: maymounaId,
-          name: 'Maymouna Kane',
-          location: 'Dakar',
-          avatar: null,
-          mutualConnections: 0,
-          mutualNames: [],
-          recommendationCount: 0,
-          masked_phone: '+1 *****4440',
-          isHardcoded: true
-        });
-      }
-      
-      setSuggestions(onboardingSuggestions);
-    } catch (error) {
-      console.error('Error fetching suggestions:', error);
-      // Fallback to real UUIDs if everything fails
-      setSuggestions([
-        {
-          id: '8cdb51a1-4e0c-498d-b5fc-bc5ce11dcaa9', // Real UUID
-          name: 'Karim Kane',
-          location: 'Dakar',
-          avatar: null,
-          mutualConnections: 0,
-          mutualNames: [],
-          recommendationCount: 0,
-          masked_phone: '+1 *****3750',
-          isHardcoded: false
-        },
-        {
-          id: 'ce599012-6457-4e6b-b81a-81da8e740f74',
-          name: 'Maymouna Kane',
-          location: 'Dakar',
-          avatar: null,
-          mutualConnections: 0,
-          mutualNames: [],
-          recommendationCount: 0,
-          masked_phone: '+1 *****4440',
-          isHardcoded: false
-        }
-      ]);
-    }
+    ];
+    
+    console.log('Onboarding Debug: Demo suggestions created:', demoSuggestions);
+    setSuggestions(demoSuggestions);
   };
 
   const handleAddFriend = async (friendId: string, friendName: string) => {
@@ -357,7 +236,19 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     try {
       console.log('Adding friend:', friendId, friendName, 'from user:', user?.id);
       
-      // All requests use real UUIDs now
+      // Handle demo friend (Lumi) - show success and move to next step
+      if (friendId === 'demo-lumi-friend') {
+        console.log('Onboarding Debug: Demo friend clicked - showing success message');
+        setLoading(false);
+        setFriendsAdded(true);
+        // Move to next step after a short delay to show the success
+        setTimeout(() => {
+          setCurrentStep(2);
+        }, 1500);
+        return;
+      }
+      
+      // All other requests use real UUIDs
       
       // Check connection status first
       const { isConnected, hasPendingRequest } = await checkConnectionStatus(friendId);
@@ -464,8 +355,8 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
     },
     {
       id: 'add-friends',
-      title: 'Add Your First Friends 👥',
-      description: 'This is where you add friends. Start with Maymouna and Karim.',
+      title: 'Learn How to Add Friends 👥',
+      description: 'Let\'s learn how to add friends! Click "Add Friend" next to Lumi to see how it works.',
     },
     {
       id: 'add-provider',
@@ -531,7 +422,9 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{friend.name}</div>
-                        <div className="text-sm text-gray-500">Dakar</div>
+                        <div className="text-sm text-gray-500">
+                          {friend.isDemo ? friend.description : 'Dakar'}
+                        </div>
                       </div>
                     </div>
                     <button
@@ -551,7 +444,7 @@ export default function EmbeddedOnboarding({ onComplete, userType, onTabChange }
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
                 <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
-                <span className="text-green-800 font-medium">Great! You've added friends!</span>
+                <span className="text-green-800 font-medium">Perfect! You've learned how to add friends!</span>
               </div>
             )}
           </div>

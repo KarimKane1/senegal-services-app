@@ -102,16 +102,6 @@ export default function ServicesTab() {
     const matchesSearch = provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          provider.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Debug logging for filtering
-    if (provider.name === 'Daunte Pean') {
-      console.log('Daunte Pean Filter Debug:', {
-        provider,
-        selectedCategory,
-        serviceType: provider.serviceType,
-        matchesCategory: selectedCategory === 'All' || provider.serviceType === selectedCategory
-      });
-    }
-    
     const matchesCategory = selectedCategory === 'All' || 
       (provider.serviceType && provider.serviceType.toLowerCase() === selectedCategory.toLowerCase());
     
@@ -120,23 +110,18 @@ export default function ServicesTab() {
       return matchesSearch && matchesCategory;
     }
     
-    // Show all providers, but only mark as network recommendations if they're recommended by user's network
-    return matchesSearch && matchesCategory;
+    // For logged-in users, only show providers that are recommended by their network
+    const networkRecommenders = (provider as any).recommenders ? (provider as any).recommenders.filter((rec: any) => 
+      connectionUserIds.includes(rec.id)
+    ) : [];
+    
+    // Only show providers that have network recommendations
+    return matchesSearch && matchesCategory && networkRecommenders.length > 0;
   }).map(provider => {
     // Check if this provider is recommended by people in the user's network
     const networkRecommenders = (provider as any).recommenders ? (provider as any).recommenders.filter((rec: any) => 
       connectionUserIds.includes(rec.id)
     ) : [];
-    
-    // Debug logging for each provider
-    if (provider.name === 'Daunte Pean') {
-      console.log('Daunte Pean Debug:', {
-        provider,
-        recommenders: (provider as any).recommenders,
-        connectionUserIds,
-        networkRecommenders
-      });
-    }
     
     return {
       ...provider,
