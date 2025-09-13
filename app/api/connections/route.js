@@ -162,7 +162,7 @@ export async function GET(req) {
     return NextResponse.json({ items });
   }
 
-  // Discover users for Find People: only seekers with a non-empty name, exclude self
+  // Discover users for Find People: only seekers with a non-empty name, exclude self and existing friends
   let discoverQuery = supabase
     .from('users')
     .select('id,name,photo_url,phone_e164');
@@ -175,6 +175,32 @@ export async function GET(req) {
     if (searchPhone) {
       console.log('Searching for user with phone:', searchPhone);
       discoverQuery = discoverQuery.eq('phone_e164', searchPhone);
+    }
+    
+    // Exclude existing friends from suggestions
+    if (userId) {
+      // Get user's existing connections
+      const { data: userConnections } = await supabase
+        .from('connection')
+        .select('user1_id,user2_id')
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+      
+      const friendIds = new Set();
+      if (userConnections) {
+        userConnections.forEach(conn => {
+          if (conn.user1_id === userId) {
+            friendIds.add(conn.user2_id);
+          } else {
+            friendIds.add(conn.user1_id);
+          }
+        });
+      }
+      
+      // Exclude self and existing friends from discover results
+      const excludeIds = [userId, ...Array.from(friendIds)];
+      if (excludeIds.length > 0) {
+        discoverQuery = discoverQuery.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
     }
   } else {
     discoverQuery = discoverQuery
